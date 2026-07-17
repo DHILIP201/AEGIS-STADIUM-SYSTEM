@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { AegisState } from '../types/aegis';
 
+interface Message {
+  sender: 'user' | 'ai';
+  text: string;
+}
+
 interface Props {
   state: AegisState | null;
 }
@@ -8,7 +13,7 @@ interface Props {
 export default function FanCompanion({ state }: Props) {
   const [lang, setLang] = useState('EN');
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
+  const [chatMessages, setChatMessages] = useState<Message[]>([
     { sender: 'ai', text: 'Hello! I am your AEGIS Fan Assistant. How can I help you navigate the stadium today?' }
   ]);
 
@@ -37,7 +42,7 @@ export default function FanCompanion({ state }: Props) {
 
   const handleSendChat = (text: string) => {
     if (!text.trim()) return;
-    const newMsgs = [...chatMessages, { sender: 'user', text }];
+    const newMsgs: Message[] = [...chatMessages, { sender: 'user', text }];
     setChatMessages(newMsgs);
     setChatInput('');
 
