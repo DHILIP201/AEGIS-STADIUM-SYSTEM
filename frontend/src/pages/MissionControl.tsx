@@ -4,6 +4,7 @@ import RiskMeter from '../components/RiskMeter';
 import MetricsBar from '../components/MetricsBar';
 import AgentPanel from '../components/AgentPanel';
 import StadiumHeatmap from '../components/StadiumHeatmap';
+import PerimeterMap from '../components/PerimeterMap';
 import RecommendationsPanel from '../components/RecommendationsPanel';
 import Scorecards from '../components/Scorecards';
 import ConfidenceChart from '../components/ConfidenceChart';
@@ -32,6 +33,7 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
   }
 
   const [varOpen, setVarOpen] = React.useState(false);
+  const [centerView, setCenterView] = React.useState<'internal' | 'perimeter'>('internal');
   const [lastEventId, setLastEventId] = React.useState('');
   const [toast, setToast] = React.useState<string | null>(null);
 
@@ -250,8 +252,34 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
           }}>
             <div style={{
               fontFamily: 'Orbitron, monospace', fontSize: '11px', fontWeight: 700,
-              color: 'var(--accent-cyan)', letterSpacing: '0.1em'
-            }}>🔮 DIGITAL TWIN TWIN-ENGINE</div>
+              color: 'var(--accent-cyan)', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '8px'
+            }}>
+              <span>🔮 DIGITAL TWIN TWIN-ENGINE</span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => setCenterView('internal')}
+                  style={{
+                    background: centerView === 'internal' ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${centerView === 'internal' ? 'var(--accent-blue)' : 'var(--border)'}`,
+                    color: centerView === 'internal' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                    padding: '2px 8px', borderRadius: '4px', fontSize: '8px', fontFamily: 'Orbitron', cursor: 'pointer', fontWeight: 700
+                  }}
+                >
+                  🏟️ INTERNAL
+                </button>
+                <button
+                  onClick={() => setCenterView('perimeter')}
+                  style={{
+                    background: centerView === 'perimeter' ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${centerView === 'perimeter' ? 'var(--accent-blue)' : 'var(--border)'}`,
+                    color: centerView === 'perimeter' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                    padding: '2px 8px', borderRadius: '4px', fontSize: '8px', fontFamily: 'Orbitron', cursor: 'pointer', fontWeight: 700
+                  }}
+                >
+                  🗺️ PERIMETER
+                </button>
+              </div>
+            </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <span className="live-badge">STADIUM: {state.stadium.name}</span>
               <span style={{
@@ -261,7 +289,11 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
             </div>
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
-            <StadiumHeatmap zones={state.stadium.zones} stadiumName={state.stadium.name} />
+            {centerView === 'internal' ? (
+              <StadiumHeatmap zones={state.stadium.zones} stadiumName={state.stadium.name} />
+            ) : (
+              <PerimeterMap state={state} />
+            )}
           </div>
         </div>
 

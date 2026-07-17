@@ -21,6 +21,7 @@ export default function App() {
   const { state, connected, sendMessage } = useAegisWebSocket();
   const [loadingStep, setLoadingStep] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [commandAudit, setCommandAudit] = useState<{ time: string; action: string; status: string }[]>([
     { time: '12:02', action: 'Approved Gate D opening redirection corridor', status: '✓ APPROVED' },
     { time: '12:05', action: 'Rejected Metro Line shutdown request', status: '✖ REJECTED' },
@@ -137,6 +138,44 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
 
     return () => clearTimeout(timer);
   }, [demoTourActive, demoStep, sendMessage]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === ' ') {
+        e.preventDefault();
+        const nextPaused = !isPaused;
+        setIsPaused(nextPaused);
+        if (sendMessage) {
+          sendMessage({ type: 'speed', speed: nextPaused ? 0.0 : 5.0 });
+        }
+        alert(nextPaused ? "Simulation PAUSED." : "Simulation RESUMED.");
+      } else if (key === '1') {
+        handleTriggerEmergency('surge');
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'surge' });
+      } else if (key === '2') {
+        handleTriggerEmergency('congestion');
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'congestion' });
+      } else if (key === '3') {
+        handleTriggerEmergency('weather');
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'weather' });
+      } else if (key === '4') {
+        handleTriggerEmergency('storm');
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'storm' });
+      } else if (key === '5') {
+        handleTriggerEmergency('fulltime');
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'fulltime' });
+      } else if (key === 'r') {
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'sunny' });
+        alert("Simulation reset to Pre-Match stage.");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPaused, sendMessage]);
 
   useEffect(() => {
     if (!connected) {
