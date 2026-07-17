@@ -70,6 +70,16 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     }
   };
 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useEffect(() => {
+    if (state && state.storyTime >= 1800) {
+      setShowSuccessModal(true);
+    } else {
+      setShowSuccessModal(false);
+    }
+  }, [state?.storyTime]);
+
   useEffect(() => {
     if (!connected) {
       const interval = setInterval(() => {
@@ -468,6 +478,99 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           </div>
         )}
       </div>
+
+      {/* Mission Completion Overlay Modal */}
+      {showSuccessModal && state && state.storyTime >= 1800 && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 2000,
+          background: 'rgba(3, 4, 10, 0.85)', backdropFilter: 'blur(10px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="glass-card" style={{
+            width: '420px', padding: '24px', border: '1.5px solid var(--accent-green)',
+            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25)', borderRadius: '12px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '12px' }}>🏆</div>
+            <div style={{
+              fontFamily: 'Orbitron, monospace', fontSize: '18px', fontWeight: 900,
+              background: 'linear-gradient(135deg, var(--accent-green), var(--accent-cyan))',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              letterSpacing: '0.08em', marginBottom: '6px'
+            }}>
+              MISSION MONITORING COMPLETE
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'Space Mono', marginBottom: '20px' }}>
+              AEGIS OS EVENT GOVERNANCE REPORT CARD
+            </div>
+
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: '8px',
+              fontFamily: 'Space Mono, monospace', fontSize: '11px', textAlign: 'left',
+              background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px',
+              border: '1px solid var(--border)', marginBottom: '20px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>MATCH:</span>
+                <span style={{ color: 'white', fontWeight: 700 }}>USA 🇺🇸 vs MEX 🇲🇽</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>FINAL ATTENDANCE:</span>
+                <span style={{ color: 'white', fontWeight: 700 }}>80,500 / 80,500</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>INCIDENTS RESOLVED:</span>
+                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>7 / 7 (100%)</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>MEDIAN RESPONSE TIME:</span>
+                <span style={{ color: 'white', fontWeight: 700 }}>1m 48s</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>AI DECISION ACCURACY:</span>
+                <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>94.2%</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>CROWD SATISFACTION:</span>
+                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>93%</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>MISSION STATUS:</span>
+                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>★ SUCCESS</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                style={{
+                  flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid var(--border)', borderRadius: '6px', color: 'white',
+                  fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 700, cursor: 'pointer'
+                }}
+              >
+                REVIEW DASHBOARD
+              </button>
+              <button
+                onClick={() => {
+                  if (sendMessage) {
+                    sendMessage({ type: 'scenario', scenario: 'start' });
+                  }
+                  setShowSuccessModal(false);
+                }}
+                style={{
+                  flex: 1, padding: '10px', background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1.5px solid var(--accent-green)', borderRadius: '6px', color: 'var(--accent-green)',
+                  fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                  boxShadow: '0 0 10px rgba(16, 185, 129, 0.1)'
+                }}
+              >
+                RESET SIMULATION
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
