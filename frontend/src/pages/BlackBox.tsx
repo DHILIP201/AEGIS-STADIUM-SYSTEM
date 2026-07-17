@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AegisState } from '../types/aegis';
 import BlackBoxLog from '../components/BlackBoxLog';
 import ConfidenceChart from '../components/ConfidenceChart';
+import { BACKEND_HTTP_URL } from '../config';
 
 interface Props {
   state: AegisState | null;
@@ -33,11 +34,11 @@ export default function BlackBox({ state }: Props) {
   const fetchReport = async () => {
     setLoadingReport(true);
     try {
-      const res = await fetch('http://localhost:8000/api/report');
+      const res = await fetch(`${BACKEND_HTTP_URL}/api/report`);
       const data = await res.json();
       setReport(data.report);
     } catch (e) {
-      setReport("Error fetching report from AEGIS OS server. Please verify backend is running on port 8000.");
+      setReport(`Error fetching report from AEGIS OS server. Please verify backend is running at ${BACKEND_HTTP_URL}.`);
     } finally {
       setLoadingReport(false);
     }

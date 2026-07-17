@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AegisState } from '../types/aegis';
+import { BACKEND_WS_URL } from '../config';
 
 export function useAegisWebSocket() {
   const [state, setState] = useState<AegisState | null>(null);
@@ -10,7 +11,7 @@ export function useAegisWebSocket() {
 
   const connect = useCallback(() => {
     try {
-      const ws = new WebSocket('ws://localhost:8000/ws');
+      const ws = new WebSocket(BACKEND_WS_URL);
       wsRef.current = ws;
       ws.onopen = () => {
         setConnected(true);
