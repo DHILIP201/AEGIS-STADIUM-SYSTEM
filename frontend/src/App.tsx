@@ -60,6 +60,27 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     URL.revokeObjectURL(url);
   };
 
+  const downloadJSONAuditLog = () => {
+    if (!state) return;
+    const logData = state.blackbox.map(b => ({
+      time: b.time,
+      event: b.title,
+      type: b.type,
+      details: b.details,
+      accuracy: b.accuracy || "N/A"
+    }));
+    const jsonString = JSON.stringify(logData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AEGIS_MatchEvents_AuditLog.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleTriggerEmergency = (type: string) => {
     if (sendMessage) {
       sendMessage({ type: 'scenario', scenario: 'emergency' });
@@ -616,8 +637,8 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               </div>
             </div>
 
-            {/* PDF Report Section */}
-            <div>
+            {/* PDF & JSON Report Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
                 onClick={downloadExecutiveReport}
                 style={{
@@ -637,6 +658,26 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
                 }}
               >
                 📥 DOWNLOAD MATCH REPORT (.TXT)
+              </button>
+              <button
+                onClick={downloadJSONAuditLog}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 179, 0, 0.15)',
+                  border: '1.5px solid var(--accent-amber)',
+                  color: 'var(--accent-amber)',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px',
+                  boxShadow: '0 0 10px rgba(255, 179, 0, 0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                📊 EXPORT AUDIT LOG (.JSON)
               </button>
             </div>
 

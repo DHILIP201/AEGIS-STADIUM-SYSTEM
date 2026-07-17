@@ -1,132 +1,123 @@
-# AEGIS OS — Autonomous Event Governance & Intelligence System
+# AEGIS OS: Autonomous Event Governance System
+## FIFA World Cup 2026 Operations & Digital Twin Command Cockpit
 
-> **The AI Brain That Runs The Entire Stadium.**
-> *"Today's stadiums react to problems. AEGIS OS predicts them before they happen."*
+AEGIS OS (Autonomous Event Governance System) is a high-fidelity, real-time stadium operations cockpit and digital twin simulator designed to manage a FIFA World Cup 2026 match (USA vs Mexico, 80,500 attendance) at AT&T Stadium.
 
----
-
-## 🎯 Project Vision (30-Second Summary)
-AEGIS OS (Autonomous Event Governance & Intelligence System) is a structured, kernel-based AI Stadium Operating System designed for the FIFA World Cup 2026. 
-
-Instead of waiting for operators to ask questions (like a traditional chatbot) or simply displaying charts (like a legacy dashboard), AEGIS OS is a **predictive digital twin**. It monitors stadium feeds in real-time, predicts crowd and safety anomalies before they escalate, coordinates 11 specialized AI Agents via a live cognitive debate engine, and dispatches proactive, explainable strategy recommendations to Mission Control and the Fan Companion.
+The platform uses a **Multi-Agent AI reasoning loop** coordinated by an Executive Synthesis Agent to monitor crowd ingress congestion, security alerts, medical queues, weather front drops, and transportation scheduling.
 
 ---
 
-## 🌍 The Problem
-Managing a World Cup match-day generates thousands of operational data points every second. Existing solutions suffer from:
-1. **Opaque Visualizations**: Dashboards show what *is happening*, not what *will happen*.
-2. **Disconnected Intelligence**: Crowd, medical, transport, and security teams operate in silos.
-3. **Reactive Actions**: Incidents are managed only *after* they trigger security alerts.
+## 🏗️ System Architecture
 
----
-
-## 🛡️ Technical Architecture Diagram
-
-```
-                 [LIVE STADIUM SENSOR FEEDS]
-      (CCTV Density, IoT Temp, GPS Registry, Metro API, Weather API)
-                              │
-                              ▼
-                   [DIGITAL TWIN ENGINE]
-             (Linear Crowd Density Interpolation)
-                              │
-                              ▼
-                [COGNITIVE SIMULATION MATRIX]
-               (What-If Causal Chain Solver)
-                              │
-                              ▼
-                 [11 KERNEL COGNITIVE AGENTS]
-       (Crowd, Transport, Security, Medical, Accessibility, etc.)
-                              │
-                              ▼
-                    [AGENT DEBATE ENGINE]
-          (Cinematic Multi-Agent Position Resolution)
-                              │
-                              ▼
-                    [STRATEGY RESOLVER]
-              (Executive Agent Unified Plan)
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-     [MISSION CONTROL UI]            [FAN COMPANION APP]
-   (WebSocket Realtime Stream)     (Proactive Route Updates)
+```text
+               ┌─────────────────────────────────────┐
+               │         Vite + React Client         │
+               └──────────────────┬──────────────────┘
+                                  │ (WebSocket Protocol)
+                                  ▼
+               ┌─────────────────────────────────────┐
+               │       FastAPI Backend Server        │
+               └──────────────────┬──────────────────┘
+                                  │
+                                  ▼
+               ┌─────────────────────────────────────┐
+               │    Simulation Orchestration Engine  │
+               └──────────────────┬──────────────────┘
+                                  │
+                                  ▼
+               ┌─────────────────────────────────────┐
+               │       Digital Twin State Kernel     │
+               └─────┬──────┬──────┬──────┬─────┬────┘
+                     │      │      │      │     │
+       ┌─────────────┼──────┼──────┼──────┼─────┼─────────────┐
+       ▼             ▼      ▼      ▼      ▼     ▼             ▼
+  Crowd Agent  Transport Security Medical Risk Volunteer Accessibility
+       │             │      │      │      │     │             │
+       └─────────────┼──────┼──────┼──────┼─────┼─────────────┘
+                     │ (Arguments collected & synthesis)
+                     ▼
+       ┌─────────────────────────────────────┐
+       │   Executive Synthesis AI Decision   │
+       └──────────────────┬──────────────────┘
+                                  │
+                                  ▼
+       ┌─────────────────────────────────────┐
+       │   Operator Hub Audit Log Approved   │
+       └─────────────────────────────────────┘
 ```
 
 ---
 
-## 🧬 AI Services Deployment & Transparency
+## 🧠 Multi-Agent Orchestration & Explainable AI
 
-AEGIS OS clearly demystifies where Generative AI is deployed versus where deterministic models are utilized, ensuring maximum engineering credibility during evaluation:
+Instead of simple alert rules, AEGIS OS models the stadium operations with specialized AI agents who debate and synthesize actions:
 
-### 🧠 Generative AI (Gemini 2.5 Flash)
-- **Strategy Recommendation Synthesis**: Generates cohesive, multi-system action guides.
-- **Cinematic Agent debates**: Resolves conflicting agent goals into unified operational strategies.
-- **Incident Flight Recorder**: Compiles post-match executive audits and lessons learned.
-- **Natural Language Parsing**: Evaluates operator "What-If" command scenarios.
-
-### ⚙️ Digital Twin Simulation Engine
-- **Crowd Dynamics**: Models zone-specific ingress flow parameters.
-- **Weather Event Cascades**: Simulates environmental feedback loops on fan routing.
-- **Transport Waves**: Projects Metro and shuttle waves.
-- **Safety Risk Calculators**: Interpolates composite threat scoring.
+1. **Crowd Agent**: Monitors zone-by-zone ingress rates, predicting Gate B bottlenecks.
+2. **Transportation Agent**: Models Metro Line 1 wave arrivals and coordinates train delay gates.
+3. **Security Agent**: Monitors AI CCTV camera count scans for crowding and exit pathing threats.
+4. **Medical Agent**: Correlates high temperature (39°C) with crowd density to predict heat stress.
+5. **Volunteer Agent**: Handles proximity dispatch guides for available stadium hosts.
+6. **Executive Synthesis Agent**: Gathers positions from all agents to formulate a composite Action Decision vector, explaining the trade-offs and safety metrics in the decision queue.
 
 ---
 
-## 📊 Quantified Simulation Impact
+## ⚡ Main Dashboards & Key Features
 
-Every action taken by the AEGIS OS Strategy Engine tracks concrete, audited feedback loops:
-
-| Metric | Baseline | Post-AEGIS Intervention | Simulated Outcome |
-|---|---|---|---|
-| **Gate B Ingress Congestion** | 91% Overload | 58% Safe capacity | **-41% Density** in 8 minutes |
-| **Emergency Medic Dispatch** | 6 min response | 1.8 min response | **28% Faster triage rescue** |
-| **Volunteers Deployment** | Ad-hoc routes | Proximity corridor routes | **17% Queue time reduction** |
-| **Critical Incidents Prevented** | — | — | **13 safe interventions logged** |
-| **Post-Match Report Generation** | 2 hours | 1.84 seconds | **Executive report instantly ready** |
+* **🚀 Mission Control**: Real-time stadium seating/concourse density heatmaps with a view toggle to switch to the **Stadium Perimeter Map** (monitoring surrounding roads, parking lot fill levels, and drone tracks).
+* **🏢 Command Center (MOC)**: Central cockpit featuring 4 live AI CCTV camera feeds scanning fan crowd counts, active incident telemetry grids, and the AI Decision Queue.
+* **📱 Smart Fan Companion**: Mock mobile app interface providing contextual FAQs, live gate density checks, and safety advice presets to fans.
+* **🔊 AI Voice Briefing**: Tap the global `AI BRIEF` button to hear a browser speech synthesis summary of the current operational state.
+* **🎮 Simulation Control Console**: Let presenters jump timelines or trigger scenarios (`Crowd Surge`, `Gate B Bottleneck`, `Storm Hits`, `Full Time`).
+* **📥 Export Operations Logs**: Download match telemetry reports in `.txt` format or structured incident event logs in `.json` formatting.
+* **🏆 Mission Success Summary**: A final overlay modal that summarizes tournament safety scorecards and incident resolution rates.
 
 ---
 
-## ⚠️ Engineering Maturity & Current Limitations
-AEGIS OS v2.0 is presented as a high-fidelity **Scenario-Based Digital Twin Simulation**:
-- **Environment Simulation**: Stadium sensors, camera streams, and weather APIs are simulated via a deterministic, time-based operational matrix.
-- **Hardware Integration**: Live deployment would require direct API mapping to stadium turnstiles, CCTV edge servers, and Metro control rooms.
+## ⌨️ Global Keyboard Shortcuts for Presenters
+
+Navigate the live demonstration hands-free using these shortcuts:
+* `Space` → Pause / Resume Simulation speed
+* `1` → Trigger **Crowd Surge** Ingress state (T=180)
+* `2` → Trigger **Gate B Bottleneck** critical state (T=360)
+* `3` → Trigger **Storm Incoming** weather warning (T=960)
+* `4` → Trigger **Storm Hits** multi-system response (T=1140)
+* `5` → Trigger **Full Time** match complete overlay card (T=1800)
+* `R` → **Reset** simulation state back to Pre-Match stage
 
 ---
 
-## 💻 Tech Stack
-- **Frontend**: React (Vite), TypeScript, HTML5 Canvas, SVG, Recharts, Vanilla CSS (Design system with custom scanlines & pulse triggers).
-- **Backend**: Python 3.13, FastAPI (Uvicorn), WebSockets, Pydantic, Python-multipart.
+## 🛠️ Installation & Setup
+
+### Backend (FastAPI)
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Start the FastAPI server:
+   ```bash
+   uvicorn main:app --reload --port 8000
+   ```
+
+### Frontend (React + Vite)
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite dev server:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## 🚀 Judges' Quick Start (3 Commands)
-
-Launch the entire ecosystem locally on Windows in three commands:
-
-### Step 1: Install Python Backend Dependencies
-```powershell
-cd backend
-pip install -r requirements.txt
-```
-
-### Step 2: Start the FastAPI Backend Server
-```powershell
-python -m uvicorn main:app --port 8000
-```
-*Verify: Open `http://localhost:8000/` in your browser to check the health status.*
-
-### Step 3: Start the React Frontend Dashboard
-```powershell
-cd ../frontend
-npm install
-npm run dev
-```
-*Open `http://localhost:5173/` in your browser.*
-
----
-
-## 🎥 Presentation Highlights to Test
-
-- **🚀 RUN SIMULATION Button**: Click the gradient button in the bottom panel to play the entire 30-minute match day scenario at **20x speed** (completes in exactly **90 seconds**).
-- **🔍 VAR REPLAY Button**: Review the exact audit path of the Gate B prediction, debate, dispatch, and outcome in a cinematic overlay.
-- **💬 NL Command Terminal**: Type `"What if rain starts?"` or `"Why didn't you close Gate B?"` in the control terminal to view the AI explainability logic.
+## 🌐 Live Deployments
+* **Vercel Frontend Client**: [Live Web Application Link](https://aegis-stadium-system.vercel.app/)
+* **Render Backend API**: `https://aegis-backend-a2mv.onrender.com`
