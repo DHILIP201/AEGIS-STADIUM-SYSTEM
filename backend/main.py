@@ -32,11 +32,18 @@ class SpeedRequest(BaseModel):
 
 
 @app.get("/")
-async def health():
+def root():
     return {
-        "status": "AEGIS OS Online",
-        "version": "2.0",
-        "stadium": "AT&T Stadium, Arlington TX",
+        "name": "AEGIS OS Backend",
+        "status": "running",
+        "version": "2.0"
+    }
+
+
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy"
     }
 
 
