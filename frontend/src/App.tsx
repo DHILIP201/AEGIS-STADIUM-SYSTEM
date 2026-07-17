@@ -20,6 +20,55 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('mission');
   const { state, connected, sendMessage } = useAegisWebSocket();
   const [loadingStep, setLoadingStep] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [commandAudit, setCommandAudit] = useState<{ time: string; action: string; status: string }[]>([
+    { time: '12:02', action: 'Approved Gate D opening redirection corridor', status: '✓ APPROVED' },
+    { time: '12:05', action: 'Rejected Metro Line shutdown request', status: '✖ REJECTED' },
+    { time: '12:08', action: 'Activated emergency storm cooling protocols', status: '✓ APPROVED' }
+  ]);
+
+  const downloadExecutiveReport = () => {
+    if (!state) return;
+    const reportText = `
+==================================================
+        AEGIS OS - EXECUTIVE MATCH REPORT
+==================================================
+Stadium: AT&T Stadium, Arlington TX
+Match: USA vs Mexico - FIFA World Cup 2026
+Uptime Status: 12h 42m | Latency: 42ms
+--------------------------------------------------
+KEY PERFORMANCE INDICATORS (KPIs):
+- Overall Safety Score: ${state.scorecards.find(s => s.category === 'Overall')?.score ?? 91}/100
+- Crowd Safety Index: ${state.scorecards.find(s => s.category === 'Crowd Safety')?.score ?? 94}%
+- Medical Readiness: ${state.scorecards.find(s => s.category === 'Medical')?.score ?? 96}%
+- Transportation Index: ${state.scorecards.find(s => s.category === 'Transportation')?.score ?? 88}%
+- Total Attendance: ${state.metrics.occupancy.toLocaleString()}
+--------------------------------------------------
+INCIDENT LOG & TELEMETRY SUMMARY:
+${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: ${b.details}`).join('\n')}
+==================================================
+`;
+    const blob = new Blob([reportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AEGIS_WorldCup2026_MatchReport.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleTriggerEmergency = (type: string) => {
+    if (sendMessage) {
+      sendMessage({ type: 'scenario', scenario: 'emergency' });
+      setCommandAudit(prev => [
+        { time: 'NOW', action: `🚨 EMERGENCY PROTOCOL TRIGGERED: ${type.toUpperCase()}`, status: '✓ APPROVED' },
+        ...prev
+      ]);
+      alert(`⚠️ CRITICAL: SYSTEM-WIDE EMERGENCY PROTOCOL [${type.toUpperCase()}] ACTIVATED. Digital Twin locks engaging...`);
+    }
+  };
 
   useEffect(() => {
     if (!connected) {
@@ -184,6 +233,29 @@ export default function App() {
 
         {/* Right side: status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* Toggle Operator Sidebar */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              padding: '4px 10px',
+              background: sidebarOpen ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+              border: `1px solid ${sidebarOpen ? 'var(--accent-blue)' : 'var(--border)'}`,
+              borderRadius: '6px',
+              color: sidebarOpen ? 'var(--accent-blue)' : 'var(--text-secondary)',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: '9px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '5px',
+              transition: 'all 0.2s ease',
+              marginRight: '4px',
+              height: '24px'
+            }}
+          >
+            <span>🔔</span>
+            <span>OPERATOR HUB {sidebarOpen ? '◀' : '▶'}</span>
+          </button>
+
           {/* Connection indicator */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{
@@ -253,13 +325,148 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Page Content */}
-      <div style={{ flex: 1 }}>
-        {activeTab === 'mission' && <MissionControl state={state} sendMessage={sendMessage} connected={connected} />}
-        {activeTab === 'fan' && <FanCompanion state={state} />}
-        {activeTab === 'command' && <CommandCenter state={state} sendMessage={sendMessage} />}
-        {activeTab === 'blackbox' && <BlackBox state={state} />}
-        {activeTab === 'prompts' && <Prompts />}
+      {/* Page Content & Sidebar Wrapper */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+        {/* Main Content Pane */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {activeTab === 'mission' && <MissionControl state={state} sendMessage={sendMessage} connected={connected} />}
+          {activeTab === 'fan' && <FanCompanion state={state} />}
+          {activeTab === 'command' && <CommandCenter state={state} sendMessage={sendMessage} />}
+          {activeTab === 'blackbox' && <BlackBox state={state} />}
+          {activeTab === 'prompts' && <Prompts />}
+        </div>
+
+        {/* Slide-out Sidebar Drawer */}
+        {sidebarOpen && state && (
+          <div style={{
+            width: '320px',
+            background: 'rgba(5, 6, 13, 0.98)',
+            borderLeft: '1px solid var(--border-bright)',
+            boxShadow: '-5px 0 30px rgba(0,212,255,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            padding: '16px',
+            overflowY: 'auto',
+            fontFamily: 'Space Mono, monospace',
+            fontSize: '10px',
+            color: 'var(--text-primary)',
+            zIndex: 100
+          }}>
+            {/* Operator Header */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+              <div style={{ fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--accent-blue)', fontSize: '11px' }}>
+                👤 ACTIVE OPERATOR MODE
+              </div>
+              <div style={{ color: 'white', fontWeight: 700, marginTop: '4px' }}>John Smith</div>
+              <div style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>INCIDENT COMMANDER • MORNING SHIFT</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '8px' }}>
+                <span>PERMS: <span style={{ color: 'var(--accent-green)' }}>ADMIN L3</span></span>
+                <span>TERM: <span style={{ color: 'var(--accent-cyan)' }}>SECURE</span></span>
+              </div>
+            </div>
+
+            {/* Emergency Protocols */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+              <div style={{ fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--accent-red)', fontSize: '10px', marginBottom: '8px' }}>
+                🚨 EMERGENCY PROTOCOLS
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                <button onClick={() => handleTriggerEmergency('evacuation')} style={{ background: 'rgba(255,51,102,0.15)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '5px', borderRadius: '4px', fontSize: '8px', cursor: 'pointer', fontWeight: 700 }}>
+                  EVACUATION
+                </button>
+                <button onClick={() => handleTriggerEmergency('lockdown')} style={{ background: 'rgba(255,51,102,0.15)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '5px', borderRadius: '4px', fontSize: '8px', cursor: 'pointer', fontWeight: 700 }}>
+                  LOCKDOWN
+                </button>
+                <button onClick={() => handleTriggerEmergency('shelter')} style={{ background: 'rgba(255,179,0,0.15)', border: '1px solid var(--accent-amber)', color: 'var(--accent-amber)', padding: '5px', borderRadius: '4px', fontSize: '8px', cursor: 'pointer', fontWeight: 700 }}>
+                  SHELTER
+                </button>
+                <button onClick={() => handleTriggerEmergency('medical')} style={{ background: 'rgba(255,107,53,0.15)', border: '1px solid var(--accent-orange)', color: 'var(--accent-orange)', padding: '5px', borderRadius: '4px', fontSize: '8px', cursor: 'pointer', fontWeight: 700 }}>
+                  MEDICAL AID
+                </button>
+              </div>
+            </div>
+
+            {/* Notification Center */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--accent-cyan)', fontSize: '10px', marginBottom: '8px' }}>
+                🔔 NOTIFICATION CENTER
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto', maxHeight: '180px' }}>
+                {state.storyTime >= 1140 && (
+                  <div style={{ background: 'rgba(255,51,102,0.1)', border: '1px solid var(--accent-red)', borderRadius: '6px', padding: '6px' }}>
+                    <div style={{ color: 'var(--accent-red)', fontWeight: 700, fontSize: '8px' }}>🔴 CRITICAL ALERT [T+19m]</div>
+                    <div style={{ fontSize: '9px', marginTop: '2px' }}>Rain storm hits stadium. Concourse density exceeded 91%. HVAC boosted.</div>
+                  </div>
+                )}
+                {state.storyTime >= 960 && (
+                  <div style={{ background: 'rgba(255,107,53,0.1)', border: '1px solid var(--accent-orange)', borderRadius: '6px', padding: '6px' }}>
+                    <div style={{ color: 'var(--accent-orange)', fontWeight: 700, fontSize: '8px' }}>🟠 WARNING [T+16m]</div>
+                    <div style={{ fontSize: '9px', marginTop: '2px' }}>Storm front detected. Heavy rainfall expected in 12 minutes. Shelters ready.</div>
+                  </div>
+                )}
+                {state.storyTime >= 360 && (
+                  <div style={{ background: 'rgba(255,51,102,0.1)', border: '1px solid var(--accent-red)', borderRadius: '6px', padding: '6px' }}>
+                    <div style={{ color: 'var(--accent-red)', fontWeight: 700, fontSize: '8px' }}>🔴 CRITICAL ALERT [T+6m]</div>
+                    <div style={{ fontSize: '9px', marginTop: '2px' }}>Gate B density at 91%. Ingress bottleneck detected. AI debate active.</div>
+                  </div>
+                )}
+                {state.storyTime >= 180 && (
+                  <div style={{ background: 'rgba(255,179,0,0.1)', border: '1px solid var(--accent-amber)', borderRadius: '6px', padding: '6px' }}>
+                    <div style={{ color: 'var(--accent-amber)', fontWeight: 700, fontSize: '8px' }}>🟡 WARNING [T+3m]</div>
+                    <div style={{ fontSize: '9px', marginTop: '2px' }}>Crowd surge ingress at Gate B (72% density). Recommending redirection.</div>
+                  </div>
+                )}
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '6px', padding: '6px' }}>
+                  <div style={{ color: 'var(--accent-green)', fontWeight: 700, fontSize: '8px' }}>🟢 SYSTEM INFO [T+0]</div>
+                  <div style={{ fontSize: '9px', marginTop: '2px' }}>Match day begins. All 8 gates nominal. Crowd arrival monitoring active.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Command History log */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+              <div style={{ fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--accent-purple)', fontSize: '10px', marginBottom: '8px' }}>
+                📜 OPERATOR AUDIT LOG
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto', fontSize: '8px' }}>
+                {commandAudit.map((log, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '2px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>[{log.time}] {log.action.substring(0, 32)}...</span>
+                    <span style={{ color: log.status.includes('APPROVED') ? 'var(--accent-green)' : 'var(--accent-red)', fontWeight: 700 }}>
+                      {log.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* PDF Report Section */}
+            <div>
+              <button
+                onClick={downloadExecutiveReport}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0, 212, 255, 0.15)',
+                  border: '1.5px solid var(--accent-blue)',
+                  color: 'var(--accent-cyan)',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px',
+                  boxShadow: '0 0 10px rgba(0, 212, 255, 0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                📥 DOWNLOAD MATCH REPORT (.TXT)
+              </button>
+            </div>
+
+          </div>
+        )}
       </div>
     </div>
   );
