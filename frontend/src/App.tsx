@@ -71,6 +71,28 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     }
   };
 
+  const speakAIBrief = () => {
+    if (!state) return;
+    window.speechSynthesis.cancel();
+
+    let briefText = "";
+    if (state.storyTime < 180) {
+      briefText = `Welcome to A.T. and T. Stadium Matchday operations. USA versus Mexico is commencing. All eight gates are operating normally. Total occupancy is currently ${state.metrics.occupancy.toLocaleString()} fans. Risk level is low. All systems nominal.`;
+    } else if (state.storyTime >= 180 && state.storyTime < 960) {
+      const gateB = Math.round((state.stadium.zones.find(z => z.id === 'south_gate_b')?.density ?? 0) * 100);
+      briefText = `Operational Alert. South Gate B density has reached ${gateB} percent. Ingress bottleneck is active. AI agents recommend opening Gate D immediately and deploying volunteers to the corridor.`;
+    } else if (state.storyTime >= 960 && state.storyTime < 1800) {
+      briefText = `Weather Warning. A rain storm is impacting stadium operations. Main concourse shelter is active. Heating ventilation systems have been boosted by thirty five percent. Metro delays are currently at ${state.metrics.transportDelayMin} minutes.`;
+    } else {
+      briefText = `Mission monitoring complete. USA wins two to one. Egress operations are active. All seven stadium incidents resolved successfully with ninety three percent crowd satisfaction. Thank you.`;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(briefText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -340,6 +362,29 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
 
         {/* Right side: status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* AI Voice Briefing Button */}
+          <button
+            onClick={speakAIBrief}
+            style={{
+              padding: '4px 10px',
+              background: 'rgba(124, 58, 237, 0.15)',
+              border: '1px solid var(--accent-purple)',
+              borderRadius: '6px',
+              color: 'var(--accent-purple)',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: '9px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '5px',
+              transition: 'all 0.2s ease',
+              marginRight: '4px',
+              height: '24px'
+            }}
+          >
+            <span>🔊</span>
+            <span>AI BRIEF</span>
+          </button>
+
           {/* Auto-Demo Tour Button */}
           <button
             onClick={startDemoTour}
