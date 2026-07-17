@@ -80,6 +80,64 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     }
   }, [state?.storyTime]);
 
+  const [demoTourActive, setDemoTourActive] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
+
+  const startDemoTour = () => {
+    if (demoTourActive) {
+      setDemoTourActive(false);
+      setDemoStep(0);
+      alert("DEMO TOUR CANCELLED. Reverting control back to manual.");
+    } else {
+      setDemoTourActive(true);
+      setDemoStep(1);
+      alert("🚀 AUTO-DEMO TOUR STARTED! AEGIS OS will now showcase a complete, synchronized crisis mitigation walkthrough. Hands-off mode active.");
+    }
+  };
+
+  useEffect(() => {
+    if (!demoTourActive || demoStep === 0) return;
+
+    let timer: any;
+
+    switch (demoStep) {
+      case 1:
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'start' });
+        setActiveTab('mission');
+        timer = setTimeout(() => setDemoStep(2), 6000);
+        break;
+      case 2:
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'surge' });
+        setActiveTab('mission');
+        timer = setTimeout(() => setDemoStep(3), 6000);
+        break;
+      case 3:
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'congestion' });
+        setActiveTab('command');
+        timer = setTimeout(() => setDemoStep(4), 6000);
+        break;
+      case 4:
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'storm' });
+        setActiveTab('fan');
+        timer = setTimeout(() => setDemoStep(5), 6000);
+        break;
+      case 5:
+        if (sendMessage) sendMessage({ type: 'scenario', scenario: 'fulltime' });
+        setActiveTab('mission');
+        timer = setTimeout(() => {
+          setDemoTourActive(false);
+          setDemoStep(0);
+          alert("🏆 DEMO TOUR COMPLETED! AEGIS OS successfully monitored, predicted, and mitigated all World Cup incidents.");
+        }, 6000);
+        break;
+      default:
+        setDemoTourActive(false);
+        break;
+    }
+
+    return () => clearTimeout(timer);
+  }, [demoTourActive, demoStep, sendMessage]);
+
   useEffect(() => {
     if (!connected) {
       const interval = setInterval(() => {
@@ -243,6 +301,29 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
 
         {/* Right side: status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* Auto-Demo Tour Button */}
+          <button
+            onClick={startDemoTour}
+            style={{
+              padding: '4px 10px',
+              background: demoTourActive ? 'rgba(0, 255, 204, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+              border: `1px solid ${demoTourActive ? 'var(--accent-cyan)' : 'var(--border)'}`,
+              borderRadius: '6px',
+              color: demoTourActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: '9px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '5px',
+              transition: 'all 0.2s ease',
+              marginRight: '4px',
+              height: '24px'
+            }}
+          >
+            <span>🚀</span>
+            <span>{demoTourActive ? `TOUR STEP ${demoStep}/5` : 'START TOUR'}</span>
+          </button>
+
           {/* Toggle Operator Sidebar */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
