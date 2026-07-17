@@ -534,16 +534,24 @@ class SimulationEngine:
 
     def apply_scenario(self, scenario: str):
         s = scenario.lower()
-        if s in ["storm", "rain"]:
-            self.jump_to(1140)
-        elif s in ["congestion", "gate", "gate_b"]:
-            self.jump_to(360)
-        elif s == "weather":
-            self.jump_to(960)
-        elif s in ["report", "end", "finish"]:
-            self.jump_to(1800)
-        elif s in ["start", "reset", "begin"]:
+        if s in ["sunny", "start", "reset", "begin"]:
             self.reset()
+        elif s in ["surge"]:
+            self.jump_to(180)
+        elif s in ["congestion", "gate", "gate_b", "debate"]:
+            self.jump_to(360)
+        elif s in ["executive", "executing", "action"]:
+            self.jump_to(540)
+        elif s in ["resolved", "outcome"]:
+            self.jump_to(720)
+        elif s in ["weather", "incoming", "forecast"]:
+            self.jump_to(960)
+        elif s in ["storm", "rain", "hits", "lightning", "power", "fire", "emergency"]:
+            self.jump_to(1140)
+        elif s in ["stabilizing", "clearing"]:
+            self.jump_to(1440)
+        elif s in ["report", "end", "finish", "fulltime"]:
+            self.jump_to(1800)
 
     def generate_report(self) -> str:
         return (

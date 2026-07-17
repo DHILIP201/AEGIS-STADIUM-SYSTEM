@@ -257,7 +257,7 @@ export default function App() {
       <div style={{ flex: 1 }}>
         {activeTab === 'mission' && <MissionControl state={state} sendMessage={sendMessage} connected={connected} />}
         {activeTab === 'fan' && <FanCompanion state={state} />}
-        {activeTab === 'command' && <CommandCenter state={state} />}
+        {activeTab === 'command' && <CommandCenter state={state} sendMessage={sendMessage} />}
         {activeTab === 'blackbox' && <BlackBox state={state} />}
         {activeTab === 'prompts' && <Prompts />}
       </div>

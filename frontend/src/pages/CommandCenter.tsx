@@ -3,9 +3,10 @@ import { AegisState } from '../types/aegis';
 
 interface Props {
   state: AegisState | null;
+  sendMessage?: (msg: any) => void;
 }
 
-export default function CommandCenter({ state }: Props) {
+export default function CommandCenter({ state, sendMessage }: Props) {
   const [decisions, setDecisions] = useState([
     { id: 1, action: "Open Gate D to full capacity", confidence: 94, status: "pending" },
     { id: 2, deploy: "Deploy 18 reserve volunteers to Gate B corridor", confidence: 92, status: "pending" },
@@ -19,6 +20,13 @@ export default function CommandCenter({ state }: Props) {
   const handleDecisionClick = (id: number, status: "approved" | "rejected") => {
     setDecisions(prev => prev.map(d => d.id === id ? { ...d, status } : d));
     alert(`Decision #${id} has been ${status.toUpperCase()} by the Match Operator.`);
+  };
+
+  const handleScenarioTrigger = (scenario: string) => {
+    if (sendMessage) {
+      sendMessage({ type: 'scenario', scenario });
+      alert(`MOC COMMAND REGISTERED: Jumper set to scenario [${scenario.toUpperCase()}]. Digital Twin states synchronizing...`);
+    }
   };
 
   const getExplanation = (id: number) => {
@@ -55,6 +63,10 @@ export default function CommandCenter({ state }: Props) {
                  state.storyTime < 1140 ? 'HALFTIME' : 
                  state.storyTime < 1700 ? `${Math.floor((state.storyTime - 1140) / 10) + 46}' (2H)` : 
                  state.storyTime < 1800 ? '90+3\' (OT)' : 'FULLTIME';
+
+  const gateBDensity = state.stadium.zones.find(z => z.id === 'south_gate_b')?.density ?? 0;
+  const isGateBCongested = gateBDensity > 0.75;
+  const isStormActive = state.storyTime >= 1140;
 
   const foodQueueMin = Math.round(state.metrics.occupancy / 10000 + 4);
   const restroomQueueMin = Math.round(state.metrics.occupancy / 12000 + 2);
@@ -95,8 +107,113 @@ export default function CommandCenter({ state }: Props) {
           color: 'var(--text-primary)'
         }}>
           <div>STATUS: <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>● SECURE</span></div>
-          <div>MODE: <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>SCENARIO DEPLOYMENT</span></div>
+          <div>MODE: <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>INTEGRATED COCKPIT</span></div>
           <div>TICK RATE: <span style={{ color: 'white' }}>10Hz</span></div>
+        </div>
+      </div>
+
+      {/* Row 1: Interactive Simulation Control Center */}
+      <div className="glass-card" style={{ padding: '16px', borderLeft: '4px solid var(--accent-amber)' }}>
+        <div style={{
+          fontFamily: 'Orbitron, monospace', fontSize: '12px', fontWeight: 700,
+          color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)',
+          paddingBottom: '6px', marginBottom: '12px', letterSpacing: '0.05em'
+        }}>
+          🎮 AEGIS OS — SIMULATION CONTROL CENTER (JUMP TIMELINE EVENTS)
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button onClick={() => handleScenarioTrigger('sunny')} style={{ background: 'rgba(255,179,0,0.1)', border: '1px solid var(--accent-amber)', color: 'var(--accent-amber)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            ☀ SUNNY (KICKOFF)
+          </button>
+          <button onClick={() => handleScenarioTrigger('surge')} style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            🚨 CROWD SURGE
+          </button>
+          <button onClick={() => handleScenarioTrigger('congestion')} style={{ background: 'rgba(255,51,102,0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            🚪 GATE B CRITICAL
+          </button>
+          <button onClick={() => handleScenarioTrigger('executive')} style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid var(--accent-purple)', color: 'var(--accent-purple)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            👑 ACTIONS DEPLOYING
+          </button>
+          <button onClick={() => handleScenarioTrigger('resolved')} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid var(--accent-green)', color: 'var(--accent-green)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            ✓ SURGE RESOLVED
+          </button>
+          <button onClick={() => handleScenarioTrigger('weather')} style={{ background: 'rgba(255,107,53,0.1)', border: '1px solid var(--accent-orange)', color: 'var(--accent-orange)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            🌩 STORM INCOMING
+          </button>
+          <button onClick={() => handleScenarioTrigger('storm')} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            ⛈ STORM HITS (CRITICAL)
+          </button>
+          <button onClick={() => handleScenarioTrigger('stabilizing')} style={{ background: 'rgba(0,255,204,0.1)', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            🧹 STORM CLEARING
+          </button>
+          <button onClick={() => handleScenarioTrigger('fulltime')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--text-muted)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '10px', fontFamily: 'Space Mono', cursor: 'pointer', fontWeight: 700 }}>
+            🏁 FULL TIME (MATCH END)
+          </button>
+        </div>
+      </div>
+
+      {/* Row 2: AI CCTV Camera Feed System */}
+      <div className="glass-card" style={{ padding: '16px', borderLeft: '4px solid var(--accent-cyan)' }}>
+        <div style={{
+          fontFamily: 'Orbitron, monospace', fontSize: '12px', fontWeight: 700,
+          color: 'var(--accent-cyan)', borderBottom: '1px solid var(--border)',
+          paddingBottom: '6px', marginBottom: '12px', letterSpacing: '0.05em'
+        }}>
+          📹 AEGIS OS — LIVE AI CCTV CAMERA FEED SYSTEM
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '12px'
+        }}>
+          {/* Cam 1 */}
+          <div style={{ background: 'rgba(0,0,0,0.4)', border: `1.5px solid ${isGateBCongested ? 'var(--accent-red)' : 'var(--border)'}`, borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
+              <span style={{ color: 'white', fontWeight: 700 }}>CAM 01 - GATE B</span>
+              <span style={{ color: isGateBCongested ? 'var(--accent-red)' : 'var(--accent-green)', fontWeight: 700, animation: isGateBCongested ? 'pulse 1s infinite' : 'none' }}>
+                {isGateBCongested ? '⚠️ CONGESTED' : '● NOMINAL'}
+              </span>
+            </div>
+            <div>DENSITY: <span style={{ color: 'white' }}>{Math.round(gateBDensity * 100)}%</span></div>
+            <div>OBJECTS DETECTED: <span style={{ color: 'white' }}>{isGateBCongested ? '432' : '124'} fans</span></div>
+            <div>ABNORMAL ACTION: <span style={{ color: 'white' }}>{isGateBCongested ? 'CRUSH RISK' : 'None'}</span></div>
+            <div style={{ marginTop: '4px', color: 'var(--accent-cyan)' }}>REC: {isGateBCongested ? 'REDIRECT GATE D' : 'MAINTAIN FLOW'}</div>
+          </div>
+          {/* Cam 2 */}
+          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1.5px solid var(--border)', borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
+              <span style={{ color: 'white', fontWeight: 700 }}>CAM 02 - GATE D CORRIDOR</span>
+              <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>● RUNNING</span>
+            </div>
+            <div>DENSITY: <span style={{ color: 'white' }}>{Math.round((state.stadium.zones.find(z => z.id === 'west_gate_d')?.density ?? 0) * 100)}%</span></div>
+            <div>VOLUNTEERS ACTIVE: <span style={{ color: 'white' }}>14 guides</span></div>
+            <div>REDIRECT RATE: <span style={{ color: 'white' }}>340/min</span></div>
+            <div style={{ marginTop: '4px', color: 'var(--accent-green)' }}>FLOW RATE: NOMINAL</div>
+          </div>
+          {/* Cam 3 */}
+          <div style={{ background: 'rgba(0,0,0,0.4)', border: `1.5px solid ${isStormActive ? 'var(--accent-orange)' : 'var(--border)'}`, borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
+              <span style={{ color: 'white', fontWeight: 700 }}>CAM 03 - MAIN CONCOURSE</span>
+              <span style={{ color: isStormActive ? 'var(--accent-orange)' : 'var(--accent-green)', fontWeight: 700 }}>
+                {isStormActive ? '🌧️ SHELTER ACTIVE' : '● NOMINAL'}
+              </span>
+            </div>
+            <div>SHELTER RATIO: <span style={{ color: 'white' }}>{Math.round((state.stadium.zones.find(z => z.id === 'concourse_main')?.density ?? 0) * 100)}%</span></div>
+            <div>HVAC BOOST: <span style={{ color: 'white' }}>{isStormActive ? '+35%' : '0%'}</span></div>
+            <div>SLIP THREAT: <span style={{ color: 'white' }}>{isStormActive ? 'MODERATE' : 'LOW'}</span></div>
+            <div style={{ marginTop: '4px', color: 'var(--accent-cyan)' }}>REC: {isStormActive ? 'HVAC ACTIVE' : 'MONITOR TEMP'}</div>
+          </div>
+          {/* Cam 4 */}
+          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1.5px solid var(--border)', borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
+              <span style={{ color: 'white', fontWeight: 700 }}>CAM 04 - SECTION 112 AID</span>
+              <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>● READY</span>
+            </div>
+            <div>MEDICS ACTIVE: <span style={{ color: 'white' }}>{state.metrics.medicalAlerts > 0 ? '8 staff' : '5 staff'}</span></div>
+            <div>HEAT ALERTS: <span style={{ color: 'white' }}>{state.metrics.medicalAlerts}</span></div>
+            <div>RESPONSE LATENCY: <span style={{ color: 'white' }}>1.8 min</span></div>
+            <div style={{ marginTop: '4px', color: 'var(--accent-green)' }}>AED DEVICE: ONLINE</div>
+          </div>
         </div>
       </div>
 
