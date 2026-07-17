@@ -131,7 +131,7 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
 
       {/* Row 2: Metrics Bar */}
       <div style={{ height: '80px', flexShrink: 0 }}>
-        <MetricsBar metrics={state.metrics} />
+        <MetricsBar metrics={state.metrics} storyTime={state.storyTime} />
       </div>
 
       {/* Row 3: Main 3-Column Section */}

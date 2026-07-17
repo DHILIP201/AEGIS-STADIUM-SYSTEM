@@ -50,12 +50,20 @@ export default function FanCompanion({ state }: Props) {
     setTimeout(() => {
       let aiText = "I'm checking that with AEGIS Mission Control...";
       const lower = text.toLowerCase();
-      if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry')) {
+      if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry') || lower.includes('concession')) {
         aiText = `Nearest food is Zone C (Burger Station). Current wait time is approximately ${foodQueueMin} minutes. Avoid Zone B as it is currently congested.`;
-      } else if (lower.includes('restroom') || lower.includes('toilet') || lower.includes('bathroom')) {
+      } else if (lower.includes('restroom') || lower.includes('toilet') || lower.includes('bathroom') || lower.includes('queue')) {
         aiText = `The closest restroom is 50 meters to your left. Wait time is approximately ${restroomQueueMin} minutes.`;
       } else if (lower.includes('seat') || lower.includes('route') || lower.includes('where')) {
         aiText = "To reach Seat 142 in Section C, take the escalator up to level 2, turn right, and follow the signs for Section C. Enter through portal 14.";
+      } else if (lower.includes('gate b') || lower.includes('gate_b') || lower.includes('b crowded') || lower.includes('congestion')) {
+        aiText = `Gate B density is currently at ${Math.round(gateBDensity * 100)}%. ${isGateBCongested ? "⚠️ It is heavily congested. We recommend redirecting to Gate D via the volunteer corridor (low occupancy)." : "Flow is within normal limits. Ingress wait is under 4 minutes."}`;
+      } else if (lower.includes('gate') || lower.includes('enter') || lower.includes('entrance')) {
+        aiText = `Gate D is currently the least congested gate (density 35%) with zero queues. Gate B is at ${Math.round(gateBDensity * 100)}% capacity.`;
+      } else if (lower.includes('parking') || lower.includes('lot') || lower.includes('car')) {
+        aiText = "Parking Lot P2 has the lowest occupancy (34%). Avoid P1 as it is currently at 88% capacity and matches egress warnings.";
+      } else if (lower.includes('medical') || lower.includes('first aid') || lower.includes('hospital') || lower.includes('aid')) {
+        aiText = "The primary first aid station is located in Section 112 (Lower Concourse). We also have 12 aid stations distributed across all levels. Emergency medical response time is currently under 2 minutes.";
       } else if (lower.includes('metro') || lower.includes('train') || lower.includes('exit')) {
         if (state.metrics.transportDelayMin > 0) {
           aiText = `Metro Line 1 currently has a ${state.metrics.transportDelayMin}-minute delay due to storm conditions. We recommend staying sheltered in the main concourse or visiting Gate D.`;
@@ -302,7 +310,7 @@ export default function FanCompanion({ state }: Props) {
           </div>
 
           {/* Preset buttons */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
             <button
               onClick={() => handleSendChat("Where is the nearest food?")}
               style={{
@@ -332,6 +340,36 @@ export default function FanCompanion({ state }: Props) {
               }}
             >
               🚇 Metro Status?
+            </button>
+            <button
+              onClick={() => handleSendChat("Is Gate B crowded?")}
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)',
+                color: 'var(--text-secondary)', padding: '4px 10px', borderRadius: '8px',
+                fontSize: '10px', whiteSpace: 'nowrap', cursor: 'pointer'
+              }}
+            >
+              🚪 Gate B Status?
+            </button>
+            <button
+              onClick={() => handleSendChat("Which parking lot is least congested?")}
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)',
+                color: 'var(--text-secondary)', padding: '4px 10px', borderRadius: '8px',
+                fontSize: '10px', whiteSpace: 'nowrap', cursor: 'pointer'
+              }}
+            >
+              🚗 Parking?
+            </button>
+            <button
+              onClick={() => handleSendChat("Where is the medical center?")}
+              style={{
+                background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)',
+                color: 'var(--text-secondary)', padding: '4px 10px', borderRadius: '8px',
+                fontSize: '10px', whiteSpace: 'nowrap', cursor: 'pointer'
+              }}
+            >
+              🏥 Medical Aid?
             </button>
           </div>
 

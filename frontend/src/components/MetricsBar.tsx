@@ -3,6 +3,7 @@ import { Metrics } from '../types/aegis';
 
 interface Props {
   metrics: Metrics;
+  storyTime?: number;
 }
 
 interface Tile {
@@ -13,8 +14,22 @@ interface Tile {
   borderColor: string;
 }
 
-export default function MetricsBar({ metrics }: Props) {
+export default function MetricsBar({ metrics, storyTime = 0 }: Props) {
+  // Compute FIFA Match phase and clock
+  const matchClockStr = storyTime < 450 ? 'PRE-MATCH' : 
+                 storyTime < 1000 ? `${Math.floor((storyTime - 450) / 11) + 1}' (1H)` : 
+                 storyTime < 1140 ? 'HALFTIME' : 
+                 storyTime < 1700 ? `${Math.floor((storyTime - 1140) / 10) + 46}' (2H)` : 
+                 storyTime < 1800 ? '90+3\' (OT)' : 'FULLTIME';
+
   const tiles: Tile[] = [
+    {
+      icon: '⚽',
+      label: 'Match Phase',
+      value: matchClockStr,
+      color: 'var(--accent-cyan)',
+      borderColor: 'var(--accent-cyan)',
+    },
     {
       icon: '👥',
       label: 'Crowd',

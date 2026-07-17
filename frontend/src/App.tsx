@@ -200,6 +200,29 @@ export default function App() {
             }}>{connected ? 'LIVE' : 'OFFLINE'}</span>
           </div>
 
+          {/* Match Score & Clock */}
+          {state && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)',
+              borderRadius: '6px', padding: '4px 10px',
+              fontFamily: 'Orbitron, monospace', fontSize: '11px', fontWeight: 700,
+              color: 'white', letterSpacing: '0.05em'
+            }}>
+              <span style={{ color: 'var(--accent-amber)' }}>🏆 FIFA 2026</span>
+              <span style={{ color: 'var(--text-muted)' }}>|</span>
+              <span>USA 🇺🇸 <span style={{ color: 'var(--accent-cyan)' }}>{state.storyTime >= 1800 ? '2' : (state.storyTime >= 1140 ? '2' : (state.storyTime >= 1000 ? '1' : '0'))}</span> - <span style={{ color: 'var(--accent-cyan)' }}>{state.storyTime >= 1140 ? '1' : '0'}</span> 🇲🇽 MEX</span>
+              <span style={{ color: 'var(--text-muted)' }}>|</span>
+              <span style={{ color: 'var(--accent-green)', minWidth: '70px', textAlign: 'center' }}>
+                {state.storyTime < 450 ? 'PRE-MATCH' : 
+                 state.storyTime < 1000 ? `${Math.floor((state.storyTime - 450) / 11) + 1}'` : 
+                 state.storyTime < 1140 ? 'HALFTIME' : 
+                 state.storyTime < 1700 ? `${Math.floor((state.storyTime - 1140) / 10) + 46}'` : 
+                 state.storyTime < 1800 ? '90+3\'' : 'FULLTIME'}
+              </span>
+            </div>
+          )}
+
           {/* Display time */}
           <div style={{
             fontFamily: 'Space Mono, monospace',
