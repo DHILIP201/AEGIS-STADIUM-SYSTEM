@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAegisWebSocket } from './hooks/useWebSocket';
 import { mockState } from './data/mockState';
+import { WS_URL } from './config';
 import MissionControl from './pages/MissionControl';
 import FanCompanion from './pages/FanCompanion';
 import CommandCenter from './pages/CommandCenter';
@@ -376,7 +377,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           <div style={{ position: 'absolute', bottom: 24, display: 'flex', gap: '16px', fontFamily: 'Space Mono', fontSize: '9px', color: 'var(--text-muted)' }}>
             <span>Frontend: v1.0.0</span>
             <span>|</span>
-            <span>Backend: wss://aegis.local</span>
+            <span>Backend: {WS_URL}</span>
             <span>|</span>
             <span style={{ color: connectionFailed ? 'var(--accent-red)' : 'var(--accent-amber)' }}>
               WebSocket: {connectionFailed ? 'DISCONNECTED' : 'CONNECTING...'}
