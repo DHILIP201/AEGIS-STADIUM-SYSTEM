@@ -4,6 +4,7 @@ import { DebateState, DebateArgument } from '../types/aegis';
 interface Props {
   debate: DebateState | null;
   demoTourActive?: boolean;
+  onClose?: () => void;
 }
 
 const PHASES = ['collecting', 'debating', 'deciding', 'decided'];
@@ -114,7 +115,7 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
   );
 }
 
-export default function DebateModal({ debate, demoTourActive }: Props) {
+export default function DebateModal({ debate, demoTourActive, onClose }: Props) {
   const [cachedDebate, setCachedDebate] = useState<DebateState | null>(null);
   const [visibleArgs, setVisibleArgs] = useState(0);
   const [closedByUser, setClosedByUser] = useState(false);
@@ -519,7 +520,10 @@ export default function DebateModal({ debate, demoTourActive }: Props) {
         }}>
           {displayDebate.phase === 'decided' ? (
             <button
-              onClick={() => setClosedByUser(true)}
+              onClick={() => {
+                setClosedByUser(true);
+                if (onClose) onClose();
+              }}
               style={{
                 background: 'var(--accent-blue)', color: 'black',
                 border: 'none', borderRadius: '4px', padding: '8px 24px',

@@ -145,6 +145,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hasShownCompletionReport, setHasShownCompletionReport] = useState(false);
+  const [showDebateModal, setShowDebateModal] = useState(false);
 
   useEffect(() => {
     if (state && state.storyTime >= 1800) {
@@ -192,11 +193,16 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
       case 3:
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'congestion' });
         setActiveTab('command');
-        timer = setTimeout(() => setDemoStep(4), 6000);
+        setShowDebateModal(true);
+        timer = setTimeout(() => {
+          setShowDebateModal(false);
+          setDemoStep(4);
+        }, 8000);
         break;
       case 4:
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'storm' });
         setActiveTab('fan');
+        setShowDebateModal(false);
         timer = setTimeout(() => setDemoStep(5), 6000);
         break;
       case 5:
@@ -637,6 +643,33 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
             </button>
           )}
 
+          {/* Active AI Debate Notification/Drilldown Button */}
+          {state && state.debate && (
+            <button
+              onClick={() => setShowDebateModal(true)}
+              style={{
+                padding: '4px 10px',
+                background: 'rgba(255, 179, 0, 0.15)',
+                border: '1px solid var(--accent-orange)',
+                borderRadius: '6px',
+                color: 'var(--accent-orange)',
+                fontFamily: 'Orbitron, monospace',
+                fontSize: '9px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '5px',
+                transition: 'all 0.2s ease',
+                marginRight: '4px',
+                height: '24px',
+                boxShadow: '0 0 10px rgba(255, 179, 0, 0.25)',
+                animation: 'pulse 1.5s infinite'
+              }}
+            >
+              <span>🤖</span>
+              <span>VIEW AI DEBATE</span>
+            </button>
+          )}
+
           {/* Auto-Demo Tour Button */}
           <button
             onClick={startDemoTour}
@@ -933,8 +966,12 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
       </div>
 
       {/* Global Debate Modal Overlay */}
-      {state && state.debate && (!demoTourActive || !state.debate.topic.includes('Storm')) && (
-        <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
+      {state && state.debate && showDebateModal && (
+        <DebateModal 
+          debate={state.debate} 
+          demoTourActive={demoTourActive} 
+          onClose={() => setShowDebateModal(false)}
+        />
       )}
 
       {/* Mission Completion Overlay Modal */}
