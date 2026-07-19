@@ -150,7 +150,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
 
     const isAnySelected = selectedZoneId !== null;
 
-    // Apply global dim layer if any zone is focused
+    // Apply dim layer if focused
     ctx.save();
     ctx.globalAlpha = isAnySelected ? 0.25 : 1.0;
 
@@ -164,7 +164,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
 
-    // Parking Zones (Exterior)
+    // Parking Zones
     ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
     ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
     ctx.lineWidth = 1;
@@ -422,8 +422,8 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         const baseRadius = 18 + (zone.capacity / 600) * 14;
 
         // Box parameters
-        const boxW = 250;
-        const boxH = 175;
+        const boxW = 260;
+        const boxH = 230;
 
         // Smart position relative to zone to prevent overlay clipping
         let boxX = zx + baseRadius + 15;
@@ -486,90 +486,147 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
 
         // Status Badge
         const mitigationActive = zone.risk === 'critical' || zone.risk === 'high';
-        ctx.fillStyle = mitigationActive ? 'var(--accent-red)' : 'var(--accent-green)';
+        ctx.fillStyle = selectedZoneTimer >= 5 ? 'var(--accent-green)' : (mitigationActive ? 'var(--accent-amber)' : 'var(--accent-green)');
         ctx.font = "bold 7px 'Space Mono', monospace";
         ctx.textAlign = 'right';
-        ctx.fillText(mitigationActive ? 'MITIGATION ACTIVE' : 'NOMINAL MONITOR', boxX + boxW - 10, boxY + 12);
+        ctx.fillText(selectedZoneTimer >= 5 ? 'MISSION STABLE' : (mitigationActive ? 'MITIGATING' : 'NOMINAL MONITOR'), boxX + boxW - 10, boxY + 12);
 
-        // Live Action Steps
+        // Live Action Steps with Rationale
         const isCongested = zone.id === 'south_gate_b' && zone.density > 0.75;
         const isStorm = (zone.id === 'concourse_main' || zone.id.includes('bowl')) && zone.risk !== 'safe';
 
-        let items = [
-          "Query CCTV telemetry feeds",
-          "Validate turnstile gate counts",
-          "Sync GPS density profiles",
-          "Strategic MOC readiness check"
+        const defaultItems = [
+          { name: "CCTV AI feed telemetry", reason: "Cross-reference crowd density" },
+          { name: "Turnstile log verification", reason: "Verify validator status" },
+          { name: "GPS density profile scan", reason: "Model bottleneck probability" },
+          { name: "Strategic readiness check", reason: "Standby agents check-in" }
         ];
-        if (isCongested) {
-          items = [
-            "Deploy 14 corridor guides",
-            "Open Gate D overflow lanes",
-            "Update dynamic signage boards",
-            "Notify fans via Companion app"
-          ];
-        } else if (isStorm) {
-          items = [
-            "Boost indoor concourse HVAC",
-            "Pre-position emergency medics",
-            "Dispatch extra Metro trains",
-            "Deploy guides to shelters"
-          ];
+        
+        const congestedItems = [
+          { name: "Deploy 14 corridor guides", reason: "Preempts Gate B queue in 3 min" },
+          { name: "Open Gate D overflow lanes", reason: "Gate D spare capacity 59%" },
+          { name: "Update dynamic signage", reason: "Redirect 18% of arrivals" },
+          { name: "Notify Fan Companion app", reason: "Push GPS detour route feeds" }
+        ];
+
+        const stormItems = [
+          { name: "Boost concourse HVAC (+35%)", reason: "Mitigates hypothermia risk" },
+          { name: "Position 8 emergency medics", reason: "Treat 3 active slip-fall alerts" },
+          { name: "Dispatch extra Metro trains", reason: "Clear +340% exit demand spike" },
+          { name: "Deploy guides to shelters", reason: "Manage Concourse 91% bottleneck" }
+        ];
+
+        const items = isCongested ? congestedItems : (isStorm ? stormItems : defaultItems);
+
+        if (selectedZoneTimer >= 5) {
+          // Render Mission Success Summary card
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.05)';
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+          ctx.beginPath();
+          ctx.roundRect(boxX + 10, boxY + 30, boxW - 20, 102, 4);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = 'var(--accent-green)';
+          ctx.font = "bold 9px 'Orbitron', monospace";
+          ctx.textBaseline = 'top';
+          ctx.fillText("🏆 MISSION STABLE & RESOLVED", boxX + 20, boxY + 38);
+
+          ctx.fillStyle = 'white';
+          ctx.font = "7.5px 'Space Mono', monospace";
+          ctx.fillText(`• Incident: ${isCongested ? "Gate B Bottleneck" : isStorm ? "Concourse Storm Crush" : "Diagnostic Check"}`, boxX + 20, boxY + 54);
+          ctx.fillText(`• Density decay: ${isCongested ? "91% ➔ 58% (Resolved)" : isStorm ? "91% ➔ 72% (Sheltered)" : "Normal limits"}`, boxX + 20, boxY + 66);
+          ctx.fillText(`• Resolution time: ${isCongested ? "8 minutes" : isStorm ? "11 minutes" : "0s"}`, boxX + 20, boxY + 78);
+          ctx.fillText(`• Safety outcome: 100% stable, 0 serious injuries`, boxX + 20, boxY + 90);
+          ctx.fillText(`• Mitigation accuracy: 94.2% (Consensus match)`, boxX + 20, boxY + 102);
+        } else {
+          // Render animated checklist items with Rationale
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          let itemY = boxY + 30;
+          items.forEach((item, index) => {
+            let symbol = "⏳";
+            let color = 'var(--text-muted)';
+            
+            if (selectedZoneTimer > index + 1) {
+              symbol = "✓";
+              color = 'var(--accent-green)';
+            } else if (selectedZoneTimer === index + 1) {
+              symbol = "●";
+              color = 'var(--accent-amber)';
+            }
+            
+            ctx.fillStyle = color;
+            ctx.font = "bold 8px 'Space Mono', monospace";
+            ctx.fillText(symbol, boxX + 10, itemY);
+            
+            ctx.fillStyle = selectedZoneTimer >= index + 1 ? 'white' : 'var(--text-muted)';
+            ctx.font = "bold 8px 'Space Mono', monospace";
+            ctx.fillText(item.name, boxX + 24, itemY);
+            
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.font = "7px 'Space Mono', monospace";
+            ctx.fillText(`Reason: ${item.reason}`, boxX + 24, itemY + 11);
+            
+            itemY += 26;
+          });
         }
 
-        // Render animated checklist items
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        let itemY = boxY + 36;
-        items.forEach((item, index) => {
-          let symbol = "⏳";
-          let color = 'var(--text-muted)';
-          
-          if (selectedZoneTimer > index + 1) {
-            symbol = "✓";
-            color = 'var(--accent-green)';
-          } else if (selectedZoneTimer === index + 1) {
-            symbol = "●";
-            color = 'var(--accent-amber)';
-          }
-          
-          ctx.fillStyle = color;
-          ctx.font = "bold 8px 'Space Mono', monospace";
-          ctx.fillText(symbol, boxX + 10, itemY);
-          
-          ctx.fillStyle = selectedZoneTimer >= index + 1 ? 'white' : 'var(--text-muted)';
-          ctx.font = "8px 'Space Mono', monospace";
-          ctx.fillText(item, boxX + 24, itemY);
-          
-          itemY += 16;
-        });
+        // Timeline drawing
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.font = "bold 7px 'Space Mono', monospace";
+        ctx.fillText("OPERATIONAL EVENT TIMELINE", boxX + 10, boxY + 138);
+
+        const times = isCongested ? ["11:02:14 Crowd Spike", "11:02:17 Analysis", "11:02:33 Resolved"] : 
+                      isStorm ? ["11:14:02 Storm Hit", "11:14:06 Emergency", "11:14:18 Stable"] :
+                      ["12:00:00 Booting", "12:00:04 Monitoring", "12:00:15 Standby"];
+                      
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = "6.5px 'Space Mono', monospace";
+        
+        let timelineText = `${times[0]}  ➔  ${times[1]}`;
+        if (selectedZoneTimer >= 5) {
+          timelineText += `  ➔  ${times[2]}`;
+        }
+        ctx.fillText(timelineText, boxX + 10, boxY + 148);
+
+        // Evidence sources drawing
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.font = "bold 7px 'Space Mono', monospace";
+        ctx.fillText("DECISION EVIDENCE SOURCES", boxX + 10, boxY + 160);
+        
+        const evidenceStr = isCongested ? "CCTV | TURNSTILES | TICKETS | TRANSPORT" :
+                            isStorm ? "CCTV | WEATHER | MEDICAL | ENERGY | METRO" :
+                            "CCTV | TURNSTILES | ENVIRONMENTAL";
+        ctx.fillStyle = 'var(--accent-cyan)';
+        ctx.font = "bold 7px 'Space Mono', monospace";
+        ctx.fillText(evidenceStr, boxX + 10, boxY + 170);
 
         // Bottom Metrics separator
         ctx.strokeStyle = 'rgba(255,255,255,0.1)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(boxX + 10, boxY + boxH - 32);
-        ctx.lineTo(boxX + boxW - 10, boxY + boxH - 32);
+        ctx.moveTo(boxX + 10, boxY + boxH - 34);
+        ctx.lineTo(boxX + boxW - 10, boxY + boxH - 34);
         ctx.stroke();
 
-        // Calculate dynamic crowd density values over time
+        // Calculate dynamic crowd density decay values over time
         const initialDensity = Math.round(zone.density * 100);
         let currentDensity = initialDensity;
         if (mitigationActive && selectedZoneTimer > 0) {
-          // De-escalate density in HUD based on animation ticks
           currentDensity = Math.max(58, initialDensity - selectedZoneTimer * 4);
         }
 
         let eta = "Nominal";
         if (isCongested) {
-          eta = selectedZoneTimer >= 5 ? "4m 12s" : "8m 00s";
+          eta = selectedZoneTimer >= 5 ? "Resolved" : "4m 12s";
         } else if (isStorm) {
-          eta = selectedZoneTimer >= 5 ? "2m 18s" : "11m 00s";
+          eta = selectedZoneTimer >= 5 ? "Resolved" : "2m 18s";
         }
 
         const confidence = zone.risk === 'critical' ? 97 : (zone.risk === 'high' ? 91 : 95);
 
-        // Render metrics
+        // Render bottom row KPIs
         ctx.fillStyle = 'var(--text-muted)';
         ctx.font = "7px 'Space Mono', monospace";
         ctx.fillText("DENSITY", boxX + 10, boxY + boxH - 24);
@@ -586,7 +643,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
 
         ctx.fillStyle = 'var(--text-muted)';
         ctx.font = "7px 'Space Mono', monospace";
-        ctx.fillText("AI CONF", boxX + 170, boxY + boxH - 24);
+        ctx.fillText("DECISION CONF", boxX + 170, boxY + boxH - 24);
         ctx.fillStyle = 'var(--accent-green)';
         ctx.font = "bold 10px 'Space Mono', monospace";
         ctx.fillText(`${confidence}%`, boxX + 170, boxY + boxH - 14);
