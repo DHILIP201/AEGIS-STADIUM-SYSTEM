@@ -11,7 +11,6 @@ import ConfidenceChart from '../components/ConfidenceChart';
 import EventGraph from '../components/EventGraph';
 import NLControl from '../components/NLControl';
 import Timeline from '../components/Timeline';
-import DebateModal from '../components/DebateModal';
 
 interface Props {
   state: AegisState | null;
@@ -102,12 +101,7 @@ export default function MissionControl({ state, sendMessage, connected, selected
       gap: '12px',
       overflowX: 'hidden'
     }}>
-      {/* Debate Modal Overlay */}
-      {state.debate && (!demoTourActive || !state.debate.topic.includes('Storm')) ? (
-        <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
-      ) : (
-        <DebateModal debate={null} demoTourActive={demoTourActive} />
-      )}
+      {/* Debate Modal Overlay is now managed globally at the App root level */}
 
       {/* Toast Notification Banner */}
       {toast && (

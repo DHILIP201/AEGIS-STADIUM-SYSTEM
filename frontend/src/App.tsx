@@ -7,6 +7,7 @@ import FanCompanion from './pages/FanCompanion';
 import CommandCenter from './pages/CommandCenter';
 import BlackBox from './pages/BlackBox';
 import Prompts from './pages/Prompts';
+import DebateModal from './components/DebateModal';
 
 type TabId = 'mission' | 'fan' | 'command' | 'blackbox' | 'prompts';
 
@@ -930,6 +931,11 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           </div>
         )}
       </div>
+
+      {/* Global Debate Modal Overlay */}
+      {state && state.debate && (!demoTourActive || !state.debate.topic.includes('Storm')) && (
+        <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
+      )}
 
       {/* Mission Completion Overlay Modal */}
       {showSuccessModal && state && (
