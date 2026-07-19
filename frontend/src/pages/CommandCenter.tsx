@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AegisState } from '../types/aegis';
+import { triggerToast } from '../config';
 
 interface Props {
   state: AegisState | null;
@@ -21,13 +22,13 @@ export default function CommandCenter({ state, sendMessage, selectedZoneId, onSe
 
   const handleDecisionClick = (id: number, status: "approved" | "rejected") => {
     setDecisions(prev => prev.map(d => d.id === id ? { ...d, status } : d));
-    alert(`Decision #${id} has been ${status.toUpperCase()} by the Match Operator.`);
+    triggerToast(`Decision #${id} has been ${status.toUpperCase()} by the Match Operator.`, status === 'approved' ? 'success' : 'error');
   };
 
   const handleScenarioTrigger = (scenario: string) => {
     if (sendMessage) {
       sendMessage({ type: 'scenario', scenario });
-      alert(`MOC COMMAND REGISTERED: Jumper set to scenario [${scenario.toUpperCase()}]. Digital Twin states synchronizing...`);
+      triggerToast(`MOC Command Registered: scenario [${scenario.toUpperCase()}] synchronized.`, 'info');
     }
   };
 

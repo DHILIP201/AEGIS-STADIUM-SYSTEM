@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAegisWebSocket } from './hooks/useWebSocket';
 import { mockState } from './data/mockState';
-import { WS_URL } from './config';
+import { WS_URL, triggerToast } from './config';
 import MissionControl from './pages/MissionControl';
 import FanCompanion from './pages/FanCompanion';
 import CommandCenter from './pages/CommandCenter';
@@ -21,6 +21,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('mission');
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'warning' | 'error' } | null>(null);
   const ws = useAegisWebSocket();
   const [isDemoMode, setIsDemoMode] = useState(false);
   
@@ -99,7 +100,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         { time: 'NOW', action: `🚨 EMERGENCY PROTOCOL TRIGGERED: ${type.toUpperCase()}`, status: '✓ APPROVED' },
         ...prev
       ]);
-      alert(`⚠️ CRITICAL: SYSTEM-WIDE EMERGENCY PROTOCOL [${type.toUpperCase()}] ACTIVATED. Digital Twin locks engaging...`);
+      triggerToast(`CRITICAL: SYSTEM-WIDE EMERGENCY PROTOCOL [${type.toUpperCase()}] ACTIVATED. Digital Twin locks engaging...`, 'error');
     }
   };
 
@@ -142,11 +143,11 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     if (demoTourActive) {
       setDemoTourActive(false);
       setDemoStep(0);
-      alert("DEMO TOUR CANCELLED. Reverting control back to manual.");
+      triggerToast("Demo Tour cancelled. Control reverted to manual.", 'warning');
     } else {
       setDemoTourActive(true);
       setDemoStep(1);
-      alert("🚀 AUTO-DEMO TOUR STARTED! AEGIS OS will now showcase a complete, synchronized crisis mitigation walkthrough. Hands-off mode active.");
+      triggerToast("Auto-Demo Tour started. Real-time crisis mitigation showcase active.", 'success');
     }
   };
 
@@ -182,7 +183,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         timer = setTimeout(() => {
           setDemoTourActive(false);
           setDemoStep(0);
-          alert("🏆 DEMO TOUR COMPLETED! AEGIS OS successfully monitored, predicted, and mitigated all World Cup incidents.");
+          setShowSuccessModal(true);
         }, 6000);
         break;
       default:
@@ -206,7 +207,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         if (sendMessage) {
           sendMessage({ type: 'speed', speed: nextPaused ? 0.0 : 5.0 });
         }
-        alert(nextPaused ? "Simulation PAUSED." : "Simulation RESUMED.");
+        triggerToast(nextPaused ? "Simulation PAUSED." : "Simulation RESUMED.", 'info');
       } else if (key === '1') {
         handleTriggerEmergency('surge');
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'surge' });
@@ -224,12 +225,33 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'fulltime' });
       } else if (key === 'r') {
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'sunny' });
-        alert("Simulation reset to Pre-Match stage.");
+        triggerToast("Simulation reset to Pre-Match stage.", 'info');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPaused, sendMessage]);
+
+  useEffect(() => {
+    const handleGlobalToast = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt.detail) {
+        setToast({
+          message: customEvt.detail.message,
+          type: customEvt.detail.type || 'info'
+        });
+      }
+    };
+    window.addEventListener('aegis-toast', handleGlobalToast);
+    return () => window.removeEventListener('aegis-toast', handleGlobalToast);
+  }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (!connected && !isDemoMode) {
@@ -936,6 +958,48 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* In-App Toast Notification Panel */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '24px', right: '24px', zIndex: 10000,
+          background: 'rgba(3, 4, 10, 0.95)',
+          border: `1.5px solid ${
+            toast.type === 'error' ? 'var(--accent-red)' :
+            toast.type === 'warning' ? 'var(--accent-amber)' :
+            toast.type === 'success' ? 'var(--accent-green)' :
+            'var(--accent-cyan)'
+          }`,
+          borderRadius: '8px', padding: '12px 18px', maxWidth: '380px',
+          boxShadow: `0 4px 25px ${
+            toast.type === 'error' ? 'rgba(255, 51, 102, 0.2)' :
+            toast.type === 'warning' ? 'rgba(255, 179, 0, 0.2)' :
+            toast.type === 'success' ? 'rgba(16, 185, 129, 0.2)' :
+            'rgba(0, 212, 255, 0.2)'
+          }`,
+          fontFamily: 'Space Mono, monospace', fontSize: '11px',
+          color: 'white',
+          animation: 'slideInRight 0.3s ease-out',
+          display: 'flex', alignItems: 'center', gap: '10px'
+        }}>
+          <span style={{ fontSize: '14px' }}>
+            {toast.type === 'error' ? '🚨' :
+             toast.type === 'warning' ? '⚠️' :
+             toast.type === 'success' ? '🏆' :
+             'ℹ️'}
+          </span>
+          <div style={{ flex: 1 }}>{toast.message}</div>
+          <button 
+            onClick={() => setToast(null)}
+            style={{
+              background: 'transparent', border: 'none', color: 'var(--text-muted)',
+              cursor: 'pointer', fontSize: '12px', padding: '0 4px'
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

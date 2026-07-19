@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AegisState } from '../types/aegis';
 import BlackBoxLog from '../components/BlackBoxLog';
 import ConfidenceChart from '../components/ConfidenceChart';
-import { API_URL } from '../config';
+import { API_URL, triggerToast } from '../config';
 
 interface Props {
   state: AegisState | null;
@@ -48,7 +48,7 @@ export default function BlackBox({ state }: Props) {
     const textToCopy = report || state.reportText;
     if (textToCopy) {
       navigator.clipboard.writeText(textToCopy);
-      alert("Executive report copied to clipboard!");
+      triggerToast("Executive report copied to clipboard!", 'success');
     }
   };
 
