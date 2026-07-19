@@ -284,8 +284,11 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           <div style={{ textAlign: 'center', maxWidth: '400px', width: '100%' }}>
             <div style={{
               fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900,
-              background: connectionFailed ? 'var(--accent-red)' : 'linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              background: connectionFailed ? 'none' : 'linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))',
+              WebkitBackgroundClip: connectionFailed ? 'initial' : 'text',
+              backgroundClip: connectionFailed ? 'initial' : 'text',
+              WebkitTextFillColor: connectionFailed ? 'var(--accent-red)' : 'transparent',
+              color: connectionFailed ? 'var(--accent-red)' : 'transparent',
               marginBottom: 8
             }}>AEGIS OS</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 24 }}>
