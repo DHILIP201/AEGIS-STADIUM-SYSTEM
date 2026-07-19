@@ -19,9 +19,10 @@ interface Props {
   connected: boolean;
   selectedZoneId: string | null;
   onSelectZone: (zoneId: string | null) => void;
+  demoTourActive?: boolean;
 }
 
-export default function MissionControl({ state, sendMessage, connected, selectedZoneId, onSelectZone }: Props) {
+export default function MissionControl({ state, sendMessage, connected, selectedZoneId, onSelectZone, demoTourActive }: Props) {
   if (!state) {
     return (
       <div style={{
@@ -102,9 +103,7 @@ export default function MissionControl({ state, sendMessage, connected, selected
       overflowX: 'hidden'
     }}>
       {/* Debate Modal Overlay */}
-      {state.debate && state.debate.phase !== null && (
-        <DebateModal debate={state.debate} />
-      )}
+      <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
 
       {/* Toast Notification Banner */}
       {toast && (

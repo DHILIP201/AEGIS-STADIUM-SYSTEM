@@ -739,6 +739,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               connected={connected} 
               selectedZoneId={selectedZoneId}
               onSelectZone={setSelectedZoneId}
+              demoTourActive={demoTourActive}
             />
           )}
           {activeTab === 'fan' && <FanCompanion state={state} />}

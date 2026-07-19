@@ -3,6 +3,7 @@ import { DebateState, DebateArgument } from '../types/aegis';
 
 interface Props {
   debate: DebateState | null;
+  demoTourActive?: boolean;
 }
 
 const PHASES = ['collecting', 'debating', 'deciding', 'decided'];
@@ -113,19 +114,45 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
   );
 }
 
-export default function DebateModal({ debate }: Props) {
+export default function DebateModal({ debate, demoTourActive }: Props) {
+  const [cachedDebate, setCachedDebate] = useState<DebateState | null>(null);
   const [visibleArgs, setVisibleArgs] = useState(0);
   const [closedByUser, setClosedByUser] = useState(false);
   const [collectProgress, setCollectProgress] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!debate) { setVisibleArgs(0); setClosedByUser(false); setCollectProgress(0); return; }
+    if (debate) {
+      if (!cachedDebate || cachedDebate.topic !== debate.topic) {
+        setClosedByUser(false);
+      }
+      setCachedDebate(debate);
+    }
+  }, [debate]);
+
+  useEffect(() => {
+    if (demoTourActive) {
+      if (!debate) {
+        setClosedByUser(true);
+      }
+    }
+  }, [debate, demoTourActive]);
+
+  useEffect(() => {
+    const activeDebate = debate || cachedDebate;
+    if (!activeDebate) { setVisibleArgs(0); setClosedByUser(false); setCollectProgress(0); return; }
+
+    if (!debate && cachedDebate) {
+      setVisibleArgs(cachedDebate.arguments.length);
+      setCollectProgress(100);
+      return;
+    }
+
     setVisibleArgs(0);
     setClosedByUser(false);
     setCollectProgress(0);
 
-    if (debate.phase === 'collecting') {
+    if (activeDebate.phase === 'collecting') {
       const interval = setInterval(() => {
         setCollectProgress(prev => {
           if (prev >= 100) { clearInterval(interval); return 100; }
@@ -137,13 +164,13 @@ export default function DebateModal({ debate }: Props) {
       setCollectProgress(100);
       const interval = setInterval(() => {
         setVisibleArgs(prev => {
-          if (prev >= debate.arguments.length) { clearInterval(interval); return prev; }
+          if (prev >= activeDebate.arguments.length) { clearInterval(interval); return prev; }
           return prev + 1;
         });
       }, 400);
       return () => clearInterval(interval);
     }
-  }, [debate?.topic, debate?.phase]);
+  }, [debate?.topic, debate?.phase, debate === null]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -151,10 +178,12 @@ export default function DebateModal({ debate }: Props) {
     }
   }, [visibleArgs, debate?.phase]);
 
-  if (!debate || closedByUser) return null;
+  const displayDebate = debate ? debate : (cachedDebate ? { ...cachedDebate, phase: 'decided' as const } : null);
 
-  const isGateB = debate.topic.includes('Gate B') || debate.topic.includes('congestion');
-  const isStorm = debate.topic.includes('Storm') || debate.topic.includes('Weather');
+  if (!displayDebate || closedByUser) return null;
+
+  const isGateB = displayDebate.topic.includes('Gate B') || displayDebate.topic.includes('congestion');
+  const isStorm = displayDebate.topic.includes('Storm') || displayDebate.topic.includes('Weather');
 
   const evidenceChecklist = isGateB ? [
     { label: "CCTV Cam 01 (Gate B) - Density: 91% (Critical Bottleneck)", done: collectProgress >= 20 },
@@ -230,7 +259,7 @@ export default function DebateModal({ debate }: Props) {
                 fontSize: 11,
                 marginTop: 2,
                 fontFamily: 'Space Mono, monospace'
-              }}>TOPIC FOCUS: {debate.topic.toUpperCase()}</div>
+              }}>TOPIC FOCUS: {displayDebate.topic.toUpperCase()}</div>
             </div>
           </div>
           
@@ -238,12 +267,12 @@ export default function DebateModal({ debate }: Props) {
           <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 16 }}>
             {PHASES.map((phase, i) => (
               <React.Fragment key={phase}>
-                <PhaseStep phase={phase} current={debate.phase} />
+                <PhaseStep phase={phase} current={displayDebate.phase} />
                 {i < PHASES.length - 1 && (
                   <div style={{
                     flex: 1,
                     height: 2,
-                    background: PHASES.indexOf(debate.phase) > i
+                    background: PHASES.indexOf(displayDebate.phase) > i
                       ? 'var(--accent-green)'
                       : 'var(--border)',
                     transition: 'background 0.4s ease',
@@ -258,7 +287,7 @@ export default function DebateModal({ debate }: Props) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }} ref={scrollRef}>
           
           {/* PHASE 1: COLLECTING EVIDENCE */}
-          {debate.phase === 'collecting' && (
+          {displayDebate.phase === 'collecting' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
               <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-cyan)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
                 📡 PHASE 1: COLLECTING OPERATIONAL EVIDENCE
@@ -300,13 +329,13 @@ export default function DebateModal({ debate }: Props) {
           )}
 
           {/* PHASE 2: DEBATING */}
-          {debate.phase === 'debating' && (
+          {displayDebate.phase === 'debating' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20, animation: 'fadeIn 0.3s ease-out' }}>
               <div>
                 <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: 12 }}>
                   🤖 ACTIVE AGENT PROPOSALS
                 </div>
-                {debate.arguments.map((arg, i) => (
+                {displayDebate.arguments.map((arg, i) => (
                   <ArgumentCard key={arg.agentId} arg={arg} index={i} visible={i < visibleArgs} />
                 ))}
               </div>
@@ -340,7 +369,7 @@ export default function DebateModal({ debate }: Props) {
           )}
 
           {/* PHASE 3: DECIDING */}
-          {debate.phase === 'deciding' && (
+          {displayDebate.phase === 'deciding' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
               <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
                 ⚖️ PHASE 3: EVALUATING PROPOSALS & UTILITY MATRIX
@@ -417,7 +446,7 @@ export default function DebateModal({ debate }: Props) {
           )}
 
           {/* PHASE 4: DECIDED */}
-          {debate.phase === 'decided' && debate.finalDecision && (
+          {displayDebate.phase === 'decided' && displayDebate.finalDecision && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
               <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-green)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
                 👑 PHASE 4: DECISION DEPLOYING & ACTIONS AUTHORIZED
@@ -443,7 +472,7 @@ export default function DebateModal({ debate }: Props) {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontFamily: 'Orbitron', fontSize: '24px', fontWeight: 900, color: 'var(--accent-green)', textShadow: '0 0 10px rgba(16,185,129,0.3)' }}>
-                      {debate.finalDecision.confidence}%
+                      {displayDebate.finalDecision.confidence}%
                     </div>
                     <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>AI CONFIDENCE</span>
                   </div>
@@ -454,7 +483,7 @@ export default function DebateModal({ debate }: Props) {
                     AUTHORIZED EXECUTION PATH
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {debate.finalDecision.actions.map((action, i) => (
+                    {displayDebate.finalDecision.actions.map((action, i) => (
                       <div key={i} style={{ display: 'flex', gap: 8, fontSize: '11px', color: 'white', fontFamily: 'Space Mono' }}>
                         <span style={{ color: 'var(--accent-green)' }}>[{i + 1}]</span>
                         <span>{action}</span>
@@ -466,11 +495,11 @@ export default function DebateModal({ debate }: Props) {
                 <div style={{ borderTop: '1px dashed rgba(16, 185, 129, 0.2)', paddingTop: '10px', fontSize: 11, fontFamily: 'Space Mono' }}>
                   <div>
                     <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>EXPECTED OUTCOME: </span>
-                    <span style={{ color: 'white' }}>{debate.finalDecision.expectedOutcome}</span>
+                    <span style={{ color: 'white' }}>{displayDebate.finalDecision.expectedOutcome}</span>
                   </div>
                   <div style={{ marginTop: 4 }}>
                     <span style={{ color: 'var(--text-muted)' }}>RATIONALE: </span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{debate.finalDecision.reasoning}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{displayDebate.finalDecision.reasoning}</span>
                   </div>
                 </div>
               </div>
@@ -488,7 +517,7 @@ export default function DebateModal({ debate }: Props) {
           justifyContent: 'flex-end',
           gap: 12
         }}>
-          {debate.phase === 'decided' ? (
+          {displayDebate.phase === 'decided' ? (
             <button
               onClick={() => setClosedByUser(true)}
               style={{
