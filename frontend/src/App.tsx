@@ -146,6 +146,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hasShownCompletionReport, setHasShownCompletionReport] = useState(false);
   const [showDebateModal, setShowDebateModal] = useState(false);
+  const [debateReviewedTopic, setDebateReviewedTopic] = useState<string | null>(null);
 
   useEffect(() => {
     if (state && state.storyTime >= 1800) {
@@ -153,9 +154,8 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         setShowSuccessModal(true);
         setHasShownCompletionReport(true);
       }
-    } else {
+    } else if (!state || state.storyTime < 1800) {
       setHasShownCompletionReport(false);
-      setShowSuccessModal(false);
     }
   }, [state?.storyTime, hasShownCompletionReport]);
 
@@ -644,9 +644,12 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           )}
 
           {/* Active AI Debate Notification/Drilldown Button */}
-          {state && state.debate && (
+          {state && state.debate && debateReviewedTopic !== state.debate?.topic && (
             <button
-              onClick={() => setShowDebateModal(true)}
+              onClick={() => {
+                setShowDebateModal(true);
+                if (state.debate) setDebateReviewedTopic(state.debate.topic);
+              }}
               style={{
                 padding: '4px 10px',
                 background: 'rgba(255, 179, 0, 0.15)',
@@ -666,7 +669,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               }}
             >
               <span>🤖</span>
-              <span>VIEW AI DEBATE</span>
+              <span>AI CONSENSUS READY</span>
             </button>
           )}
 
