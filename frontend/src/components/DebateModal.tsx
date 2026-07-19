@@ -5,6 +5,7 @@ interface Props {
   debate: DebateState | null;
   demoTourActive?: boolean;
   onClose?: () => void;
+  onOpenReport?: () => void;
 }
 
 const PHASES = ['collecting', 'debating', 'deciding', 'decided'];
@@ -115,43 +116,36 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
   );
 }
 
-export default function DebateModal({ debate, demoTourActive, onClose }: Props) {
+export default function DebateModal({ debate, demoTourActive, onClose, onOpenReport }: Props) {
   const [cachedDebate, setCachedDebate] = useState<DebateState | null>(null);
   const [visibleArgs, setVisibleArgs] = useState(0);
   const [closedByUser, setClosedByUser] = useState(false);
   const [collectProgress, setCollectProgress] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Monitor active debate updates and cache them
   useEffect(() => {
     if (debate) {
       if (!cachedDebate || cachedDebate.topic !== debate.topic) {
         setClosedByUser(false);
+        setVisibleArgs(0);
+        setCollectProgress(0);
       }
       setCachedDebate(debate);
     }
-  }, [debate]);
+  }, [debate?.topic]);
 
+  // Set closedByUser state when debate finishes under tour steps
   useEffect(() => {
-    if (demoTourActive) {
-      if (!debate) {
-        setClosedByUser(true);
-      }
+    if (demoTourActive && !debate) {
+      setClosedByUser(true);
     }
   }, [debate, demoTourActive]);
 
+  // Handle animation loops without resetting progress on stage transitions
   useEffect(() => {
     const activeDebate = debate || cachedDebate;
-    if (!activeDebate) { setVisibleArgs(0); setClosedByUser(false); setCollectProgress(0); return; }
-
-    if (!debate && cachedDebate) {
-      setVisibleArgs(cachedDebate.arguments.length);
-      setCollectProgress(100);
-      return;
-    }
-
-    setVisibleArgs(0);
-    setClosedByUser(false);
-    setCollectProgress(0);
+    if (!activeDebate) return;
 
     if (activeDebate.phase === 'collecting') {
       const interval = setInterval(() => {
@@ -512,24 +506,46 @@ export default function DebateModal({ debate, demoTourActive, onClose }: Props) 
           background: 'rgba(0,212,255,0.01)',
           display: 'flex',
           justifyContent: 'flex-end',
+          alignItems: 'center',
           gap: 12
         }}>
           {displayDebate.phase === 'decided' ? (
-            <button
-              onClick={() => {
-                setClosedByUser(true);
-                if (onClose) onClose();
-              }}
-              style={{
-                background: 'var(--accent-blue)', color: 'black',
-                border: 'none', borderRadius: '4px', padding: '8px 24px',
-                fontFamily: 'Orbitron', fontSize: '11px', fontWeight: 900,
-                cursor: 'pointer', boxShadow: '0 0 15px rgba(0, 212, 255, 0.3)',
-                letterSpacing: '0.05em'
-              }}
-            >
-              DISMISS & RESUME MONITORING
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <span style={{ color: 'var(--accent-green)', fontFamily: 'Space Mono', fontSize: '10px', fontWeight: 'bold', marginRight: '8px' }}>
+                ✓ AI Consensus Complete
+              </span>
+              <button
+                onClick={() => {
+                  setClosedByUser(true);
+                  if (onClose) onClose();
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)', color: 'white',
+                  border: '1px solid var(--border)', borderRadius: '4px', padding: '8px 16px',
+                  fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 700,
+                  cursor: 'pointer', transition: 'all 0.2s ease'
+                }}
+              >
+                CONTINUE TO DASHBOARD
+              </button>
+              {onOpenReport && (
+                <button
+                  onClick={() => {
+                    setClosedByUser(true);
+                    if (onClose) onClose();
+                    onOpenReport();
+                  }}
+                  style={{
+                    background: 'var(--accent-blue)', color: 'black',
+                    border: 'none', borderRadius: '4px', padding: '8px 16px',
+                    fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 900,
+                    cursor: 'pointer', boxShadow: '0 0 15px rgba(0, 212, 255, 0.3)'
+                  }}
+                >
+                  VIEW AFTER ACTION REPORT
+                </button>
+              )}
+            </div>
           ) : (
             <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="live-badge" style={{ background: 'rgba(255,179,0,0.1)', color: 'var(--accent-amber)', border: '1px solid var(--accent-amber)' }}>

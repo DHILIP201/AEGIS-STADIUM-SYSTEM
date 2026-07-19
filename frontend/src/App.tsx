@@ -159,6 +159,13 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
     }
   }, [state?.storyTime, hasShownCompletionReport]);
 
+  // Enforce manual-only opening: reset debate modal visibility when topic changes
+  useEffect(() => {
+    if (state?.debate?.topic) {
+      setShowDebateModal(false);
+    }
+  }, [state?.debate?.topic]);
+
   const [demoTourActive, setDemoTourActive] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
 
@@ -970,6 +977,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           debate={state.debate} 
           demoTourActive={demoTourActive} 
           onClose={() => setShowDebateModal(false)}
+          onOpenReport={() => setShowSuccessModal(true)}
         />
       )}
 
