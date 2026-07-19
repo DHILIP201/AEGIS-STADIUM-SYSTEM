@@ -103,7 +103,11 @@ export default function MissionControl({ state, sendMessage, connected, selected
       overflowX: 'hidden'
     }}>
       {/* Debate Modal Overlay */}
-      <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
+      {state.debate && (!demoTourActive || !state.debate.topic.includes('Storm')) ? (
+        <DebateModal debate={state.debate} demoTourActive={demoTourActive} />
+      ) : (
+        <DebateModal debate={null} demoTourActive={demoTourActive} />
+      )}
 
       {/* Toast Notification Banner */}
       {toast && (
