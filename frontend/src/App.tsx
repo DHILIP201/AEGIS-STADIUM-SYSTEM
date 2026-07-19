@@ -143,14 +143,19 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
   };
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [hasShownCompletionReport, setHasShownCompletionReport] = useState(false);
 
   useEffect(() => {
     if (state && state.storyTime >= 1800) {
-      setShowSuccessModal(true);
+      if (!hasShownCompletionReport) {
+        setShowSuccessModal(true);
+        setHasShownCompletionReport(true);
+      }
     } else {
+      setHasShownCompletionReport(false);
       setShowSuccessModal(false);
     }
-  }, [state?.storyTime]);
+  }, [state?.storyTime, hasShownCompletionReport]);
 
   const [demoTourActive, setDemoTourActive] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
@@ -291,6 +296,11 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       {/* Loading Overlay */}
       {(!connected && !isDemoMode) && (
         <div style={{
@@ -535,7 +545,18 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+        <div 
+          className="no-scrollbar"
+          style={{ 
+            display: 'flex', 
+            gap: 4, 
+            flex: 1,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            paddingRight: '12px'
+          }}
+        >
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -591,27 +612,29 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           </button>
 
           {/* Last Mission Report Button */}
-          <button
-            onClick={() => setShowSuccessModal(true)}
-            style={{
-              padding: '4px 10px',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid var(--accent-green)',
-              borderRadius: '6px',
-              color: 'var(--accent-green)',
-              fontFamily: 'Orbitron, monospace',
-              fontSize: '9px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '5px',
-              transition: 'all 0.2s ease',
-              marginRight: '4px',
-              height: '24px'
-            }}
-          >
-            <span>🏆</span>
-            <span>LAST REPORT</span>
-          </button>
+          {hasShownCompletionReport && (
+            <button
+              onClick={() => setShowSuccessModal(true)}
+              style={{
+                padding: '4px 10px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid var(--accent-green)',
+                borderRadius: '6px',
+                color: 'var(--accent-green)',
+                fontFamily: 'Orbitron, monospace',
+                fontSize: '9px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '5px',
+                transition: 'all 0.2s ease',
+                marginRight: '4px',
+                height: '24px'
+              }}
+            >
+              <span>🏆</span>
+              <span>LAST REPORT</span>
+            </button>
+          )}
 
           {/* Auto-Demo Tour Button */}
           <button
