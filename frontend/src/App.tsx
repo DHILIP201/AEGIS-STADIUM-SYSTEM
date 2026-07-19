@@ -18,6 +18,22 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'prompts', label: 'Prompt Registry', icon: '✍️' },
 ];
 
+function AnimatedNumber({ value, suffix = "", duration = 1200 }: { value: number; suffix?: string; duration?: number }) {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setCurrent(progress * value);
+      if (progress >= 1) clearInterval(timer);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+  const isFloat = value % 1 !== 0;
+  return <span>{current.toFixed(isFloat ? 1 : 0)}{suffix}</span>;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('mission');
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
@@ -574,6 +590,29 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
             <span>AI BRIEF</span>
           </button>
 
+          {/* Last Mission Report Button */}
+          <button
+            onClick={() => setShowSuccessModal(true)}
+            style={{
+              padding: '4px 10px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid var(--accent-green)',
+              borderRadius: '6px',
+              color: 'var(--accent-green)',
+              fontFamily: 'Orbitron, monospace',
+              fontSize: '9px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '5px',
+              transition: 'all 0.2s ease',
+              marginRight: '4px',
+              height: '24px'
+            }}
+          >
+            <span>🏆</span>
+            <span>LAST REPORT</span>
+          </button>
+
           {/* Auto-Demo Tour Button */}
           <button
             onClick={startDemoTour}
@@ -869,92 +908,175 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
       </div>
 
       {/* Mission Completion Overlay Modal */}
-      {showSuccessModal && state && state.storyTime >= 1800 && (
+      {showSuccessModal && state && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 2000,
-          background: 'rgba(3, 4, 10, 0.85)', backdropFilter: 'blur(10px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          position: 'fixed', inset: 0, zIndex: 10005,
+          background: 'rgba(3, 4, 10, 0.9)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+          animation: 'fadeIn 0.3s ease-out'
         }}>
-          <div className="glass-card" style={{
-            width: '420px', padding: '24px', border: '1.5px solid var(--accent-green)',
-            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25)', borderRadius: '12px',
-            textAlign: 'center'
+          <div className="glass-card-bright" style={{
+            maxWidth: '680px', width: '100%', padding: '28px',
+            border: '1.5px solid var(--accent-green)', borderRadius: '12px',
+            background: '#04060c', boxShadow: '0 0 50px rgba(16, 185, 129, 0.3)',
+            display: 'flex', flexDirection: 'column', gap: '16px',
+            animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>🏆</div>
-            <div style={{
-              fontFamily: 'Orbitron, monospace', fontSize: '18px', fontWeight: 900,
-              background: 'linear-gradient(135deg, var(--accent-green), var(--accent-cyan))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              letterSpacing: '0.08em', marginBottom: '6px'
-            }}>
-              MISSION MONITORING COMPLETE
-            </div>
-            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'Space Mono', marginBottom: '20px' }}>
-              AEGIS OS EVENT GOVERNANCE REPORT CARD
-            </div>
-
-            <div style={{
-              display: 'flex', flexDirection: 'column', gap: '8px',
-              fontFamily: 'Space Mono, monospace', fontSize: '11px', textAlign: 'left',
-              background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px',
-              border: '1px solid var(--border)', marginBottom: '20px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>MATCH:</span>
-                <span style={{ color: 'white', fontWeight: 700 }}>USA 🇺🇸 vs MEX 🇲🇽</span>
+            {/* Header */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '36px', marginBottom: '6px' }}>🏆</div>
+              <div style={{
+                fontFamily: 'Orbitron, monospace', fontSize: '20px', fontWeight: 900,
+                background: 'linear-gradient(135deg, var(--accent-green), var(--accent-cyan))',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                letterSpacing: '0.12em', marginBottom: '4px'
+              }}>
+                EXECUTIVE AFTER ACTION REPORT
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>FINAL ATTENDANCE:</span>
-                <span style={{ color: 'white', fontWeight: 700 }}>80,500 / 80,500</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>INCIDENTS RESOLVED:</span>
-                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>7 / 7 (100%)</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>MEDIAN RESPONSE TIME:</span>
-                <span style={{ color: 'white', fontWeight: 700 }}>1m 48s</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>AI DECISION ACCURACY:</span>
-                <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>94.2%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>CROWD SATISFACTION:</span>
-                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>93%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>MISSION STATUS:</span>
-                <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>★ SUCCESS</span>
+              <div style={{
+                fontFamily: 'Space Mono, monospace', fontSize: '10px', color: 'var(--accent-cyan)',
+                textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}>
+                FIFA World Cup Stadium Operations • Match Governance Success
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            {/* Split layout: KPIs & Executive Summary */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '20px', alignItems: 'start'
+            }}>
+              {/* Left Column: KPI metrics card */}
+              <div style={{
+                background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)',
+                borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column',
+                gap: '10px', fontFamily: 'Space Mono, monospace', fontSize: '11px'
+              }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '10px', color: 'var(--text-muted)', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '6px', marginBottom: '4px' }}>
+                  OPERATIONAL METRICS
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Attendance:</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>80,455</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Incidents Detected:</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>7</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Incidents Resolved:</span>
+                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>7 / 7 (100%)</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>AI Decision Acc:</span>
+                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>
+                    <AnimatedNumber value={94.2} suffix="%" />
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Avg Response:</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>
+                    <AnimatedNumber value={1.84} suffix=" sec" />
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Crowd Satisfaction:</span>
+                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>
+                    <AnimatedNumber value={96} suffix="%" />
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Prediction Conf:</span>
+                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>
+                    <AnimatedNumber value={97} suffix="%" />
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Duration:</span>
+                  <span style={{ color: 'white', fontWeight: 700 }}>90 minutes</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '4px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>STATUS:</span>
+                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>★ SUCCESS</span>
+                </div>
+              </div>
+
+              {/* Right Column: Narrative Box */}
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '10px', color: 'var(--text-muted)', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '6px', marginBottom: '8px' }}>
+                  AI EXECUTIVE SUMMARY
+                </div>
+                <div style={{
+                  background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
+                  borderRadius: '8px', padding: '14px', maxHeight: '180px', overflowY: 'auto',
+                  fontFamily: 'Space Mono, monospace', fontSize: '10.5px', color: 'var(--text-secondary)',
+                  lineHeight: '1.6', textAlign: 'left'
+                }}>
+                  <strong>Operational Audit Log Summary:</strong>
+                  <br /><br />
+                  During the simulation match, AEGIS OS monitored crowd movement, transportation bottlenecks, medical readiness, and site security.
+                  <br /><br />
+                  A severe congestion event at Gate B was detected early. The AI Debate Engine evaluated four strategies and authorized a composite mitigation:
+                  <br />
+                  • Deploy 14 corridor guides
+                  <br />
+                  • Redirect 18% of arrivals to Gate D
+                  <br />
+                  • Update dynamic signage boards
+                  <br />
+                  • Notify fans via Fan Companion app
+                  <br />
+                  • Delay Metro exit releases (4m)
+                  <br /><br />
+                  <strong>Outcome:</strong> Gate B density was reduced from 91% to 58% in 8 minutes. Zero safety incidents occurred.
+                  <br /><br />
+                  <strong>Cascade Storm Response:</strong>
+                  <br />
+                  Heavy rain hit the stadium, pushing concourse density to 91% critical. The system boosted indoor HVAC systems by 35% to prevent fan hypothermia, dispatched 6 emergency trains to metro lines, and positioned medics. All fans were safely sheltered inside 11 minutes.
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
               <button
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setActiveTab('blackbox');
+                }}
                 style={{
-                  flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)',
+                  flex: 1.2, padding: '10px 16px', background: 'rgba(255,255,255,0.05)',
                   border: '1px solid var(--border)', borderRadius: '6px', color: 'white',
-                  fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 700, cursor: 'pointer'
+                  fontFamily: 'Orbitron, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                REVIEW DASHBOARD
+                📼 REVIEW TIMELINE
               </button>
               <button
                 onClick={() => {
-                  if (sendMessage) {
-                    sendMessage({ type: 'scenario', scenario: 'start' });
-                  }
                   setShowSuccessModal(false);
+                  startDemoTour();
                 }}
                 style={{
-                  flex: 1, padding: '10px', background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1.5px solid var(--accent-green)', borderRadius: '6px', color: 'var(--accent-green)',
-                  fontFamily: 'Orbitron', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
-                  boxShadow: '0 0 10px rgba(16, 185, 129, 0.1)'
+                  flex: 1.2, padding: '10px 16px', background: 'rgba(0, 212, 255, 0.12)',
+                  border: '1px solid var(--accent-blue)', borderRadius: '6px', color: 'var(--accent-cyan)',
+                  fontFamily: 'Orbitron, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                RESET SIMULATION
+                🔄 RESTART DEMO TOUR
+              </button>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                style={{
+                  flex: 1, padding: '10px 16px', background: 'var(--accent-green)',
+                  border: 'none', borderRadius: '6px', color: 'black',
+                  fontFamily: 'Orbitron, monospace', fontSize: '10px', fontWeight: 900, cursor: 'pointer',
+                  boxShadow: '0 0 15px rgba(16, 185, 129, 0.3)', transition: 'all 0.2s ease'
+                }}
+              >
+                CONTINUE TO DASHBOARD
               </button>
             </div>
           </div>
