@@ -19,9 +19,10 @@ interface Props {
   selectedZoneId: string | null;
   onSelectZone: (zoneId: string | null) => void;
   demoTourActive?: boolean;
+  onOpenReport?: () => void;
 }
 
-export default function MissionControl({ state, sendMessage, connected, selectedZoneId, onSelectZone, demoTourActive }: Props) {
+export default function MissionControl({ state, sendMessage, connected, selectedZoneId, onSelectZone, demoTourActive, onOpenReport }: Props) {
   if (!state) {
     return (
       <div style={{
@@ -566,6 +567,7 @@ export default function MissionControl({ state, sendMessage, connected, selected
             onScenario={handleScenario}
             onSpeed={handleSpeed}
             onReset={handleReset}
+            onOpenReport={onOpenReport}
           />
         </div>
       </div>

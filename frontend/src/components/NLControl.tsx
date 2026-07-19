@@ -6,9 +6,10 @@ interface Props {
   onScenario: (scenario: string) => void;
   onSpeed: (speed: number) => void;
   onReset: () => void;
+  onOpenReport?: () => void;
 }
 
-export default function NLControl({ onSend, nlResponse, onScenario, onSpeed, onReset }: Props) {
+export default function NLControl({ onSend, nlResponse, onScenario, onSpeed, onReset, onOpenReport }: Props) {
   const [query, setQuery] = useState('');
   const [activeSpeed, setActiveSpeed] = useState(1);
   const [terminalHistory, setTerminalHistory] = useState<string[]>([
@@ -55,7 +56,8 @@ export default function NLControl({ onSend, nlResponse, onScenario, onSpeed, onR
       setTerminalHistory(prev => [...prev, "[OK] High-volume ingress scenario active at Gate B."]);
     } else if (lower.includes('report')) {
       onScenario('report');
-      setTerminalHistory(prev => [...prev, "[OK] Compiling cognitive post-match report."]);
+      if (onOpenReport) onOpenReport();
+      setTerminalHistory(prev => [...prev, "[OK] Compiling cognitive post-match report.", "[OK] Opening Executive After Action Report overlay."]);
     } else if (lower.includes('volunteers')) {
       setTerminalHistory(prev => [...prev, "[OK] Volunteers routed: 14 agents pre-positioned in corridor B-D."]);
     } else {

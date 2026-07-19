@@ -151,8 +151,8 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
   useEffect(() => {
     if (state && state.storyTime >= 1800) {
       if (!hasShownCompletionReport) {
-        setShowSuccessModal(true);
         setHasShownCompletionReport(true);
+        triggerToast("🏆 AFTER ACTION REPORT READY — Click '🏆 LAST REPORT' to review.", "success");
       }
     } else if (!state || state.storyTime < 1800) {
       setHasShownCompletionReport(false);
@@ -193,16 +193,11 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
       case 3:
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'congestion' });
         setActiveTab('command');
-        setShowDebateModal(true);
-        timer = setTimeout(() => {
-          setShowDebateModal(false);
-          setDemoStep(4);
-        }, 8000);
+        timer = setTimeout(() => setDemoStep(4), 6000);
         break;
       case 4:
         if (sendMessage) sendMessage({ type: 'scenario', scenario: 'storm' });
         setActiveTab('fan');
-        setShowDebateModal(false);
         timer = setTimeout(() => setDemoStep(5), 6000);
         break;
       case 5:
@@ -211,7 +206,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
         timer = setTimeout(() => {
           setDemoTourActive(false);
           setDemoStep(0);
-          setShowSuccessModal(true);
+          triggerToast("🏆 Demo Tour completed. After Action Report compiled. Click '🏆 LAST REPORT' to review.", "success");
         }, 6000);
         break;
       default:
@@ -800,6 +795,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               selectedZoneId={selectedZoneId}
               onSelectZone={setSelectedZoneId}
               demoTourActive={demoTourActive}
+              onOpenReport={() => setShowSuccessModal(true)}
             />
           )}
           {activeTab === 'fan' && <FanCompanion state={state} />}
