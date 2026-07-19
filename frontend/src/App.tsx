@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAegisWebSocket } from './hooks/useWebSocket';
+import { mockState } from './data/mockState';
 import MissionControl from './pages/MissionControl';
 import FanCompanion from './pages/FanCompanion';
 import CommandCenter from './pages/CommandCenter';
@@ -18,8 +19,16 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('mission');
-  const { state, connected, sendMessage } = useAegisWebSocket();
+  const ws = useAegisWebSocket();
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  
+  const state = isDemoMode ? mockState : ws.state;
+  const connected = isDemoMode ? true : ws.connected;
+  const sendMessage = isDemoMode ? () => {} : ws.sendMessage;
+
   const [loadingStep, setLoadingStep] = useState(0);
+  const [connectionFailed, setConnectionFailed] = useState(false);
+  const [missionLaunched, setMissionLaunched] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [commandAudit, setCommandAudit] = useState<{ time: string; action: string; status: string }[]>([
@@ -221,15 +230,19 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
   }, [isPaused, sendMessage]);
 
   useEffect(() => {
-    if (!connected) {
+    if (!connected && !isDemoMode) {
       const interval = setInterval(() => {
         setLoadingStep(prev => Math.min(prev + 1, 7));
-      }, 250);
-      return () => clearInterval(interval);
+      }, 500);
+      const timeout = setTimeout(() => {
+        setConnectionFailed(true);
+      }, 6000);
+      return () => { clearInterval(interval); clearTimeout(timeout); };
     } else {
-      setLoadingStep(0);
+      setLoadingStep(7);
+      setConnectionFailed(false);
     }
-  }, [connected]);
+  }, [connected, isDemoMode]);
 
   const riskColor = state?.riskColor ?? '#00d4ff';
   const riskLabel = state?.riskLabel ?? '---';
@@ -239,7 +252,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Loading Overlay */}
-      {!connected && (
+      {(!connected && !isDemoMode) && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
           background: 'var(--bg-deep)',
@@ -255,49 +268,177 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
             <div style={{
               position: 'absolute', inset: 0,
               border: '3px solid transparent',
-              borderTopColor: 'var(--accent-blue)',
+              borderTopColor: connectionFailed ? 'var(--accent-red)' : 'var(--accent-blue)',
               borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
+              animation: connectionFailed ? 'none' : 'spin 1s linear infinite'
             }} />
             <div style={{
               position: 'absolute', inset: 8,
               border: '2px solid transparent',
-              borderTopColor: 'var(--accent-cyan)',
+              borderTopColor: connectionFailed ? 'var(--accent-red)' : 'var(--accent-cyan)',
               borderRadius: '50%',
-              animation: 'spin 0.7s linear infinite reverse'
+              animation: connectionFailed ? 'none' : 'spin 0.7s linear infinite reverse'
             }} />
-            <span style={{ fontSize: 24 }}>⚡</span>
+            <span style={{ fontSize: 24 }}>{connectionFailed ? '⚠️' : '⚡'}</span>
           </div>
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', maxWidth: '400px', width: '100%' }}>
             <div style={{
-              fontFamily: 'Orbitron, monospace',
-              fontSize: 28,
-              fontWeight: 900,
-              background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              fontFamily: 'Orbitron, monospace', fontSize: 28, fontWeight: 900,
+              background: connectionFailed ? 'var(--accent-red)' : 'linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               marginBottom: 8
             }}>AEGIS OS</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 16 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 14, fontFamily: 'Inter, sans-serif', marginBottom: 24 }}>
               Autonomous Event Governance & Intelligence System
             </div>
-            <div style={{ color: 'var(--accent-blue)', fontFamily: 'Space Mono, monospace', fontSize: 13, marginBottom: 8 }}>
-              Initializing AEGIS OS Kernel...
+            
+            <div style={{ color: connectionFailed ? 'var(--accent-red)' : 'var(--accent-blue)', fontFamily: 'Space Mono, monospace', fontSize: 13, marginBottom: 12 }}>
+              {connectionFailed ? 'CONNECTION TIMEOUT' : 'Initializing AEGIS OS Kernel...'}
             </div>
+            
+            {/* Progress Bar */}
+            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '8px' }}>
+              <div style={{ 
+                width: `${Math.floor((loadingStep / 7) * 100)}%`, height: '100%', 
+                background: connectionFailed ? 'var(--accent-red)' : 'var(--accent-cyan)',
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
+            <div style={{ textAlign: 'right', fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+              {Math.floor((loadingStep / 7) * 100)}%
+            </div>
+
             <div style={{
-              display: 'flex', flexDirection: 'column', gap: 4,
-              fontSize: 10, fontFamily: 'Space Mono, monospace',
-              textAlign: 'left', margin: '12px auto 0 auto', width: 'fit-content'
+              display: 'flex', flexDirection: 'column', gap: 8,
+              fontSize: 11, fontFamily: 'Space Mono, monospace',
+              textAlign: 'left', background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)'
             }}>
-              {loadingStep >= 1 && <div style={{ color: 'var(--accent-green)' }}>✓ Digital Twin Loaded</div>}
-              {loadingStep >= 2 && <div style={{ color: 'var(--accent-green)' }}>✓ Crowd Kernel Operational</div>}
-              {loadingStep >= 3 && <div style={{ color: 'var(--accent-green)' }}>✓ Transport Kernel Operational</div>}
-              {loadingStep >= 4 && <div style={{ color: 'var(--accent-green)' }}>✓ Medical Kernel Operational</div>}
-              {loadingStep >= 5 && <div style={{ color: 'var(--accent-green)' }}>✓ Security Kernel Operational</div>}
-              {loadingStep >= 6 && <div style={{ color: 'var(--accent-green)' }}>✓ Strategy Engine Resolved</div>}
-              {loadingStep >= 7 && <div style={{ color: 'var(--accent-cyan)' }}>✓ Gemini Connected (Ready)</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Frontend Client</span>
+                <span style={{ color: 'var(--accent-green)' }}>✅ READY</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Backend API</span>
+                <span style={{ color: connectionFailed ? 'var(--accent-red)' : (loadingStep >= 2 ? 'var(--accent-green)' : 'var(--accent-amber)') }}>
+                  {connectionFailed ? '❌ FAILED' : (loadingStep >= 2 ? '✅ READY' : '⏳ CONNECTING...')}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>WebSocket Stream</span>
+                <span style={{ color: connectionFailed ? 'var(--accent-red)' : (loadingStep >= 4 ? 'var(--accent-green)' : 'var(--accent-amber)') }}>
+                  {connectionFailed ? '❌ FAILED' : (loadingStep >= 4 ? '✅ READY' : '⏳ WAITING...')}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Digital Twin Engine</span>
+                <span style={{ color: connectionFailed ? 'var(--text-muted)' : (loadingStep >= 5 ? 'var(--accent-green)' : 'var(--accent-amber)') }}>
+                  {connectionFailed ? '---' : (loadingStep >= 5 ? '✅ READY' : '⏳ WAITING...')}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>AI Logic Kernel</span>
+                <span style={{ color: connectionFailed ? 'var(--text-muted)' : (loadingStep >= 7 ? 'var(--accent-green)' : 'var(--accent-amber)') }}>
+                  {connectionFailed ? '---' : (loadingStep >= 7 ? '✅ READY' : '⏳ WAITING...')}
+                </span>
+              </div>
             </div>
+
+            {connectionFailed && (
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button
+                  onClick={() => { setLoadingStep(0); setConnectionFailed(false); ws.reconnect(); }}
+                  style={{
+                    flex: 1, padding: '12px', background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--border)', borderRadius: '6px', color: 'white',
+                    fontFamily: 'Orbitron', fontSize: '11px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  🔄 RETRY CONNECTION
+                </button>
+                <button
+                  onClick={() => setIsDemoMode(true)}
+                  style={{
+                    flex: 1, padding: '12px', background: 'rgba(0, 212, 255, 0.15)',
+                    border: '1.5px solid var(--accent-blue)', borderRadius: '6px', color: 'var(--accent-cyan)',
+                    fontFamily: 'Orbitron', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                    boxShadow: '0 0 15px rgba(0, 212, 255, 0.2)'
+                  }}
+                >
+                  🚀 START DEMO MODE
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <div style={{ position: 'absolute', bottom: 24, display: 'flex', gap: '16px', fontFamily: 'Space Mono', fontSize: '9px', color: 'var(--text-muted)' }}>
+            <span>Frontend: v1.0.0</span>
+            <span>|</span>
+            <span>Backend: wss://aegis.local</span>
+            <span>|</span>
+            <span style={{ color: connectionFailed ? 'var(--accent-red)' : 'var(--accent-amber)' }}>
+              WebSocket: {connectionFailed ? 'DISCONNECTED' : 'CONNECTING...'}
+            </span>
+            <span>|</span>
+            <span>Latency: {connectionFailed ? '---' : '42ms'}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Section / Landing Overlay */}
+      {(connected || isDemoMode) && !missionLaunched && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          background: 'rgba(5, 6, 13, 0.95)', backdropFilter: 'blur(10px)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: '24px'
+        }}>
+          <div style={{ textAlign: 'center', maxWidth: '600px', animation: 'fadeIn 0.5s ease-out' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏟️</div>
+            <h1 style={{
+              fontFamily: 'Orbitron, monospace', fontSize: '36px', fontWeight: 900,
+              background: 'linear-gradient(135deg, white, var(--text-muted))',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              marginBottom: '16px'
+            }}>
+              AI-POWERED DIGITAL TWIN
+            </h1>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '32px', lineHeight: 1.6 }}>
+              AEGIS OS is an autonomous event governance system for the FIFA World Cup 2026. It monitors live crowd telemetry, predicts crises, and coordinates multi-agent responses in real-time.
+            </p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '40px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '16px', borderRadius: '8px' }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '24px', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: '4px' }}>80,500</div>
+                <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--text-muted)' }}>CAPACITY MONITORED</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '16px', borderRadius: '8px' }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '24px', fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: '4px' }}>94.2%</div>
+                <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--text-muted)' }}>AI PREDICTION ACCURACY</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', padding: '16px', borderRadius: '8px' }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '24px', fontWeight: 700, color: 'var(--accent-green)', marginBottom: '4px' }}>7/7</div>
+                <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--text-muted)' }}>INCIDENTS RESOLVED</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMissionLaunched(true)}
+              style={{
+                padding: '16px 32px', background: 'var(--accent-blue)',
+                border: 'none', borderRadius: '8px', color: 'black',
+                fontFamily: 'Orbitron', fontSize: '14px', fontWeight: 900, cursor: 'pointer',
+                boxShadow: '0 0 30px rgba(0, 212, 255, 0.4)',
+                transition: 'all 0.2s ease', letterSpacing: '0.05em'
+              }}
+            >
+              LAUNCH MISSION CONTROL
+            </button>
+            {isDemoMode && (
+              <div style={{ marginTop: '16px', fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--accent-amber)' }}>
+                ⚠️ Running in Offline Demo Mode
+              </div>
+            )}
           </div>
         </div>
       )}

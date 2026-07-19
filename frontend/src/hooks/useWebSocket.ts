@@ -52,5 +52,5 @@ export function useAegisWebSocket() {
     }
   }, []);
 
-  return { state, connected, sendMessage };
+  return { state, connected, sendMessage, reconnect: connect };
 }
