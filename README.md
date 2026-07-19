@@ -1,123 +1,230 @@
-# AEGIS OS: Autonomous Event Governance System
-## FIFA World Cup 2026 Operations & Digital Twin Command Cockpit
+# 🏟️ AEGIS OS
+### AI-Powered Stadium Digital Twin & Multi-Agent Operations Platform
 
-AEGIS OS (Autonomous Event Governance System) is a high-fidelity, real-time stadium operations cockpit and digital twin simulator designed to manage a FIFA World Cup 2026 match (USA vs Mexico, 80,500 attendance) at AT&T Stadium.
-
-The platform uses a **Multi-Agent AI reasoning loop** coordinated by an Executive Synthesis Agent to monitor crowd ingress congestion, security alerts, medical queues, weather front drops, and transportation scheduling.
+![License](https://img.shields.io/badge/license-MIT-blue)
+![React](https://img.shields.io/badge/React-18-61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB)
 
 ---
 
-## 🏗️ System Architecture
+## Overview
 
-```text
-               ┌─────────────────────────────────────┐
-               │         Vite + React Client         │
-               └──────────────────┬──────────────────┘
-                                  │ (WebSocket Protocol)
-                                  ▼
-               ┌─────────────────────────────────────┐
-               │       FastAPI Backend Server        │
-               └──────────────────┬──────────────────┘
-                                  │
-                                  ▼
-               ┌─────────────────────────────────────┐
-               │    Simulation Orchestration Engine  │
-               └──────────────────┬──────────────────┘
-                                  │
-                                  ▼
-               ┌─────────────────────────────────────┐
-               │       Digital Twin State Kernel     │
-               └─────┬──────┬──────┬──────┬─────┬────┘
-                     │      │      │      │     │
-       ┌─────────────┼──────┼──────┼──────┼─────┼─────────────┐
-       ▼             ▼      ▼      ▼      ▼     ▼             ▼
-  Crowd Agent  Transport Security Medical Risk Volunteer Accessibility
-       │             │      │      │      │     │             │
-       └─────────────┼──────┼──────┼──────┼─────┼─────────────┘
-                     │ (Arguments collected & synthesis)
-                     ▼
-       ┌─────────────────────────────────────┐
-       │   Executive Synthesis AI Decision   │
-       └──────────────────┬──────────────────┘
-                                  │
-                                  ▼
-       ┌─────────────────────────────────────┐
-       │   Operator Hub Audit Log Approved   │
-       └─────────────────────────────────────┘
+AEGIS OS is an AI-powered Digital Twin platform designed to simulate and support real-time stadium operations during large-scale sporting events.
+
+The platform combines a live Digital Twin, multi-agent AI reasoning, explainable decision-making, operational dashboards, and executive reporting into a unified command-and-control experience.
+
+The project was developed as a Prompt Wars competition submission.
+
+---
+
+# Features
+
+## 🏟️ Digital Twin
+
+- Interactive Stadium Visualization
+- Live Crowd Density Heatmap
+- Operational Zone Selection
+- AI Operations HUD
+- Dynamic Mitigation Workflows
+
+---
+
+## 🤖 Multi-Agent AI
+
+- Consensus Engine
+- AI Debate Console
+- Explainable Decision Making
+- Utility Matrix
+- Confidence Scoring
+- Operational Recommendations
+
+---
+
+## 📹 Operations Center
+
+- Mission Control Dashboard
+- Executive Command Center
+- AI CCTV Monitoring
+- Risk Assessment
+- Operational Metrics
+- Live Incident Tracking
+
+---
+
+## 📋 Executive Intelligence
+
+- Executive Summary
+- Black Box Timeline
+- After Action Report
+- AI Voice Briefings
+- Prompt Registry
+- AI Brief Generator
+
+---
+
+## 🚑 Scenario Simulation
+
+Supports multiple operational scenarios including:
+
+- Crowd Congestion
+- Severe Weather
+- Medical Response
+- Transportation Disruptions
+- Security Monitoring
+
+---
+
+## 💬 Natural Language Operations
+
+Interactive command console supporting:
+
+- report
+- help
+- simulate
+- scenario control
+- operational queries
+
+---
+
+# Architecture
+
+```
+React + TypeScript
+        │
+        ▼
+Mission Control UI
+        │
+        ▼
+FastAPI Backend
+        │
+        ▼
+WebSocket Event Engine
+        │
+        ▼
+Multi-Agent AI
+        │
+        ▼
+Digital Twin
+        │
+        ▼
+Operational Dashboards
 ```
 
 ---
 
-## 🧠 Multi-Agent Orchestration & Explainable AI
+# Technology Stack
 
-Instead of simple alert rules, AEGIS OS models the stadium operations with specialized AI agents who debate and synthesize actions:
+### Frontend
 
-1. **Crowd Agent**: Monitors zone-by-zone ingress rates, predicting Gate B bottlenecks.
-2. **Transportation Agent**: Models Metro Line 1 wave arrivals and coordinates train delay gates.
-3. **Security Agent**: Monitors AI CCTV camera count scans for crowding and exit pathing threats.
-4. **Medical Agent**: Correlates high temperature (39°C) with crowd density to predict heat stress.
-5. **Volunteer Agent**: Handles proximity dispatch guides for available stadium hosts.
-6. **Executive Synthesis Agent**: Gathers positions from all agents to formulate a composite Action Decision vector, explaining the trade-offs and safety metrics in the decision queue.
+- React
+- TypeScript
+- Vite
+- HTML5 Canvas
+- WebSockets
 
----
+### Backend
 
-## ⚡ Main Dashboards & Key Features
+- FastAPI
+- Python
+- AsyncIO
 
-* **🚀 Mission Control**: Real-time stadium seating/concourse density heatmaps with a view toggle to switch to the **Stadium Perimeter Map** (monitoring surrounding roads, parking lot fill levels, and drone tracks).
-* **🏢 Command Center (MOC)**: Central cockpit featuring 4 live AI CCTV camera feeds scanning fan crowd counts, active incident telemetry grids, and the AI Decision Queue.
-* **📱 Smart Fan Companion**: Mock mobile app interface providing contextual FAQs, live gate density checks, and safety advice presets to fans.
-* **🔊 AI Voice Briefing**: Tap the global `AI BRIEF` button to hear a browser speech synthesis summary of the current operational state.
-* **🎮 Simulation Control Console**: Let presenters jump timelines or trigger scenarios (`Crowd Surge`, `Gate B Bottleneck`, `Storm Hits`, `Full Time`).
-* **📥 Export Operations Logs**: Download match telemetry reports in `.txt` format or structured incident event logs in `.json` formatting.
-* **🏆 Mission Success Summary**: A final overlay modal that summarizes tournament safety scorecards and incident resolution rates.
+### AI
 
----
-
-## ⌨️ Global Keyboard Shortcuts for Presenters
-
-Navigate the live demonstration hands-free using these shortcuts:
-* `Space` → Pause / Resume Simulation speed
-* `1` → Trigger **Crowd Surge** Ingress state (T=180)
-* `2` → Trigger **Gate B Bottleneck** critical state (T=360)
-* `3` → Trigger **Storm Incoming** weather warning (T=960)
-* `4` → Trigger **Storm Hits** multi-system response (T=1140)
-* `5` → Trigger **Full Time** match complete overlay card (T=1800)
-* `R` → **Reset** simulation state back to Pre-Match stage
+- Multi-Agent Decision Engine
+- Explainable AI
+- Prompt Engineering
 
 ---
 
-## 🛠️ Installation & Setup
+# User Experience
 
-### Backend (FastAPI)
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Start the FastAPI server:
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
+AEGIS OS was designed around an operator-first philosophy.
 
-### Frontend (React + Vite)
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite dev server:
-   ```bash
-   npm run dev
-   ```
+Key UX principles include:
+
+- Manual operator control
+- Explainable AI
+- Non-intrusive notifications
+- Executive reporting
+- Persistent operational context
+- Stable viewport interactions
 
 ---
 
-## 🌐 Live Deployments
-* **Vercel Frontend Client**: [Live Web Application Link](https://aegis-stadium-system.vercel.app/)
-* **Render Backend API**: `https://aegis-backend-a2mv.onrender.com`
+# Project Highlights
+
+- Interactive Digital Twin
+- AI Consensus Engine
+- Explainable AI
+- Live Stadium Simulation
+- Executive Mission Reporting
+- Professional Dashboard UX
+- Real-Time Synchronization
+
+---
+
+# Screenshots
+
+Add screenshots here:
+
+- Mission Control
+- Digital Twin
+- AI Debate
+- Operations HUD
+- Executive Report
+
+---
+
+# Running Locally
+
+```bash
+git clone <repository>
+
+cd aegis-os
+
+npm install
+
+npm run dev
+```
+
+Backend
+
+```bash
+cd backend
+
+pip install -r requirements.txt
+
+uvicorn main:app --reload
+```
+
+---
+
+# Future Enhancements
+
+- Predictive Crowd Forecasting
+- Mobile Operations Companion
+- GIS Mapping Integration
+- Additional Incident Simulations
+- Extended AI Agent Library
+
+---
+
+# Competition
+
+Built as a submission for **Prompt Wars**, demonstrating how AI-driven multi-agent systems, Digital Twins, and explainable decision intelligence can support real-time stadium operations.
+
+---
+
+# License
+
+MIT License
+
+---
+
+## Author
+
+**Your Name**
+
+AI Engineer | Full Stack Developer
