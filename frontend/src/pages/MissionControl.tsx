@@ -17,9 +17,11 @@ interface Props {
   state: AegisState | null;
   sendMessage: (msg: object) => void;
   connected: boolean;
+  selectedZoneId: string | null;
+  onSelectZone: (zoneId: string | null) => void;
 }
 
-export default function MissionControl({ state, sendMessage, connected }: Props) {
+export default function MissionControl({ state, sendMessage, connected, selectedZoneId, onSelectZone }: Props) {
   if (!state) {
     return (
       <div style={{
@@ -290,7 +292,12 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
           </div>
           <div style={{ flex: 1, position: 'relative' }}>
             {centerView === 'internal' ? (
-              <StadiumHeatmap zones={state.stadium.zones} stadiumName={state.stadium.name} />
+              <StadiumHeatmap 
+                zones={state.stadium.zones} 
+                stadiumName={state.stadium.name} 
+                selectedZoneId={selectedZoneId}
+                onSelectZone={onSelectZone}
+              />
             ) : (
               <PerimeterMap state={state} />
             )}
@@ -305,65 +312,154 @@ export default function MissionControl({ state, sendMessage, connected }: Props)
           padding: '12px',
           overflow: 'hidden'
         }}>
-          {/* Executive Summary Panel */}
-          <div style={{
-            padding: '10px 12px',
-            background: 'rgba(255, 179, 0, 0.02)',
-            border: '1px solid rgba(255, 179, 0, 0.15)',
-            borderRadius: '8px',
-            marginBottom: '10px',
-            fontSize: '11px'
-          }}>
+          {selectedZoneId ? (() => {
+            const z = state.stadium.zones.find(zone => zone.id === selectedZoneId);
+            if (!z) return null;
+            const densityPct = Math.round(z.density * 100);
+            
+            let waitTime = `${Math.round(z.current * 0.0015)} min`;
+            let flowRate = `${Math.round(z.current * 0.02)}/min`;
+            let suggestion = "Maintain monitoring";
+            
+            if (z.id.includes('gate_b')) {
+              waitTime = densityPct > 75 ? "11 min 24s" : "3 min";
+              flowRate = densityPct > 75 ? "120/min" : "340/min";
+              suggestion = densityPct > 75 ? "Redirect overflow to Gate D" : "Nominal gate checkin";
+            } else if (z.id.includes('gate_d')) {
+              waitTime = "1 min";
+              suggestion = state.storyTime >= 360 ? "Absorbing Gate B divert flow" : "Ready for ingress wave";
+            } else if (z.id.includes('concourse')) {
+              waitTime = densityPct > 75 ? "4 min" : "1 min";
+              suggestion = densityPct > 75 ? "Emergency wet-weather shelter active" : "Normal traffic flow";
+            } else if (z.id.includes('bowl')) {
+              waitTime = "N/A (Seats)";
+              flowRate = "N/A";
+              suggestion = "Seating sectors safe";
+            }
+            
+            return (
+              <div style={{
+                padding: '10px 12px',
+                background: 'rgba(0, 212, 255, 0.02)',
+                border: '1px solid var(--accent-blue)',
+                borderRadius: '8px',
+                marginBottom: '10px',
+                fontSize: '11px',
+                animation: 'fadeIn 0.3s ease-out'
+              }}>
+                <div style={{
+                  fontFamily: 'Orbitron, monospace',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: 'var(--accent-cyan)',
+                  borderBottom: '1px solid var(--border)',
+                  paddingBottom: '4px',
+                  marginBottom: '6px',
+                  letterSpacing: '0.08em',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                }}>
+                  <span>📡 ZONE TELEMETRY DETAILS</span>
+                  <button onClick={() => onSelectZone(null)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', fontSize: '8px', fontFamily: 'Orbitron' }}>[CLEAR]</button>
+                </div>
+                
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'white', marginBottom: '8px', fontFamily: 'Orbitron' }}>
+                  {z.name.toUpperCase()}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', fontFamily: 'Space Mono, monospace' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>DENSITY: </span>
+                    <span style={{ color: z.risk === 'critical' ? 'var(--accent-red)' : z.risk === 'high' ? 'var(--accent-orange)' : 'var(--accent-cyan)', fontWeight: 700 }}>{densityPct}%</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>RISK: </span>
+                    <span style={{ color: z.risk === 'critical' ? 'var(--accent-red)' : z.risk === 'high' ? 'var(--accent-orange)' : 'var(--accent-green)', fontWeight: 700 }}>{z.risk.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>OCCUPANCY: </span>
+                    <span style={{ color: 'white' }}>{z.current.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>CAPACITY: </span>
+                    <span style={{ color: 'white' }}>{z.capacity.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>FLOW RATE: </span>
+                    <span style={{ color: 'white' }}>{flowRate}</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>WAIT TIME: </span>
+                    <span style={{ color: 'white' }}>{waitTime}</span>
+                  </div>
+                </div>
+                
+                <div style={{ marginTop: '8px', borderTop: '1px dashed var(--border)', paddingTop: '6px' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '9px', display: 'block', fontFamily: 'Space Mono' }}>AI CRITICAL RESOLUTION GUIDANCE:</span>
+                  <span style={{ color: 'var(--accent-amber)', fontSize: '10px', fontWeight: 700, fontFamily: 'Space Mono' }}>{suggestion}</span>
+                </div>
+              </div>
+            );
+          })() : (
             <div style={{
-              fontFamily: 'Orbitron, monospace',
-              fontSize: '10px',
-              fontWeight: 700,
-              color: 'var(--accent-amber)',
-              borderBottom: '1px solid rgba(255,179,0,0.15)',
-              paddingBottom: '4px',
-              marginBottom: '6px',
-              letterSpacing: '0.08em'
-            }}>🛡️ COGNITIVE EXECUTIVE SUMMARY</div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', fontFamily: 'Space Mono, monospace' }}>
-              <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>SITUATION: </span>
-                <span style={{ color: state.riskColor, fontWeight: 700 }}>{state.riskLabel}</span>
+              padding: '10px 12px',
+              background: 'rgba(255, 179, 0, 0.02)',
+              border: '1px solid rgba(255, 179, 0, 0.15)',
+              borderRadius: '8px',
+              marginBottom: '10px',
+              fontSize: '11px'
+            }}>
+              <div style={{
+                fontFamily: 'Orbitron, monospace',
+                fontSize: '10px',
+                fontWeight: 700,
+                color: 'var(--accent-amber)',
+                borderBottom: '1px solid rgba(255,179,0,0.15)',
+                paddingBottom: '4px',
+                marginBottom: '6px',
+                letterSpacing: '0.08em'
+              }}>🛡️ COGNITIVE EXECUTIVE SUMMARY</div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', fontFamily: 'Space Mono, monospace' }}>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>SITUATION: </span>
+                  <span style={{ color: state.riskColor, fontWeight: 700 }}>{state.riskLabel}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>CRITICAL AREA: </span>
+                  <span style={{ color: 'white' }}>{state.storyTime >= 960 ? 'Concourse' : state.storyTime >= 180 ? 'Gate B' : 'None'}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>EXPECTED PEAK: </span>
+                  <span style={{ color: 'white' }}>{state.storyTime >= 960 ? '12:25 (Storm)' : state.storyTime >= 180 ? '12:07 (Ingress)' : '12:35 (Halftime)'}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>BEST ACTION: </span>
+                  <span style={{ color: 'var(--accent-blue)', fontSize: '9px', fontWeight: 700 }}>{state.storyTime >= 960 ? 'HVAC+Metro+Shelter' : state.storyTime >= 180 ? 'Divert to Gate D' : 'Monitor Flow'}</span>
+                </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>CRITICAL AREA: </span>
-                <span style={{ color: 'white' }}>{state.storyTime >= 960 ? 'Concourse' : state.storyTime >= 180 ? 'Gate B' : 'None'}</span>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>EXPECTED PEAK: </span>
-                <span style={{ color: 'white' }}>{state.storyTime >= 960 ? '12:25 (Storm)' : state.storyTime >= 180 ? '12:07 (Ingress)' : '12:35 (Halftime)'}</span>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '9px' }}>BEST ACTION: </span>
-                <span style={{ color: 'var(--accent-blue)', fontSize: '9px', fontWeight: 700 }}>{state.storyTime >= 960 ? 'HVAC+Metro+Shelter' : state.storyTime >= 180 ? 'Divert to Gate D' : 'Monitor Flow'}</span>
+              
+              <div style={{ marginTop: '8px', borderTop: '1px dashed rgba(255,179,0,0.15)', paddingTop: '6px' }}>
+                <div style={{ fontSize: '9px', fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '3px' }}>
+                  EXPECTED IMPACT METRICS:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', textAlign: 'center', fontFamily: 'Space Mono' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
+                    <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>CROWD</div>
+                    <div style={{ color: 'var(--accent-green)', fontWeight: 700 }}>{state.storyTime >= 960 ? '-31%' : state.storyTime >= 180 ? '-41%' : 'Stable'}</div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
+                    <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>MEDICAL</div>
+                    <div style={{ color: 'var(--accent-green)', fontWeight: 700 }}>{state.storyTime >= 960 ? '0 severe' : state.storyTime >= 180 ? '-28%' : 'Low'}</div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
+                    <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>TRANSPORT</div>
+                    <div style={{ color: 'var(--accent-amber)', fontWeight: 700 }}>{state.storyTime >= 960 ? '+8m' : state.storyTime >= 180 ? '+4m delay' : 'Normal'}</div>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div style={{ marginTop: '8px', borderTop: '1px dashed rgba(255,179,0,0.15)', paddingTop: '6px' }}>
-              <div style={{ fontSize: '9px', fontFamily: 'Orbitron', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '3px' }}>
-                EXPECTED IMPACT METRICS:
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', textAlign: 'center', fontFamily: 'Space Mono' }}>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>CROWD</div>
-                  <div style={{ color: 'var(--accent-green)', fontWeight: 700 }}>{state.storyTime >= 960 ? '-31%' : state.storyTime >= 180 ? '-41%' : 'Stable'}</div>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>MEDICAL</div>
-                  <div style={{ color: 'var(--accent-green)', fontWeight: 700 }}>{state.storyTime >= 960 ? '0 severe' : state.storyTime >= 180 ? '-28%' : 'Low'}</div>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '3px', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>TRANSPORT</div>
-                  <div style={{ color: 'var(--accent-amber)', fontWeight: 700 }}>{state.storyTime >= 960 ? '+8m' : state.storyTime >= 180 ? '+4m delay' : 'Normal'}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           <div style={{
             fontFamily: 'Orbitron, monospace',

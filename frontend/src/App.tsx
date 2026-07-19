@@ -20,6 +20,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('mission');
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const ws = useAegisWebSocket();
   const [isDemoMode, setIsDemoMode] = useState(false);
   
@@ -670,9 +671,24 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         {/* Main Content Pane */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {activeTab === 'mission' && <MissionControl state={state} sendMessage={sendMessage} connected={connected} />}
+          {activeTab === 'mission' && (
+            <MissionControl 
+              state={state} 
+              sendMessage={sendMessage} 
+              connected={connected} 
+              selectedZoneId={selectedZoneId}
+              onSelectZone={setSelectedZoneId}
+            />
+          )}
           {activeTab === 'fan' && <FanCompanion state={state} />}
-          {activeTab === 'command' && <CommandCenter state={state} sendMessage={sendMessage} />}
+          {activeTab === 'command' && (
+            <CommandCenter 
+              state={state} 
+              sendMessage={sendMessage} 
+              selectedZoneId={selectedZoneId}
+              onSelectZone={setSelectedZoneId}
+            />
+          )}
           {activeTab === 'blackbox' && <BlackBox state={state} />}
           {activeTab === 'prompts' && <Prompts />}
         </div>

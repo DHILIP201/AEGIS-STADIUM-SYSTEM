@@ -4,9 +4,11 @@ import { AegisState } from '../types/aegis';
 interface Props {
   state: AegisState | null;
   sendMessage?: (msg: any) => void;
+  selectedZoneId: string | null;
+  onSelectZone: (zoneId: string | null) => void;
 }
 
-export default function CommandCenter({ state, sendMessage }: Props) {
+export default function CommandCenter({ state, sendMessage, selectedZoneId, onSelectZone }: Props) {
   const [decisions, setDecisions] = useState([
     { id: 1, action: "Open Gate D to full capacity", confidence: 94, status: "pending" },
     { id: 2, deploy: "Deploy 18 reserve volunteers to Gate B corridor", confidence: 92, status: "pending" },
@@ -67,6 +69,24 @@ export default function CommandCenter({ state, sendMessage }: Props) {
   const gateBDensity = state.stadium.zones.find(z => z.id === 'south_gate_b')?.density ?? 0;
   const isGateBCongested = gateBDensity > 0.75;
   const isStormActive = state.storyTime >= 1140;
+
+  const isCam1Focused = selectedZoneId !== null && ['north_gate_a', 'south_gate_b', 'east_gate_c'].includes(selectedZoneId);
+  const activeZone1 = isCam1Focused ? state.stadium.zones.find(z => z.id === selectedZoneId) : null;
+  const c1Name = activeZone1 ? activeZone1.name.toUpperCase() : 'GATE B';
+  const c1Density = activeZone1 ? Math.round(activeZone1.density * 100) : Math.round(gateBDensity * 100);
+  const c1Objects = activeZone1 ? activeZone1.current : (isGateBCongested ? 432 : 124);
+  const c1Status = activeZone1 ? (activeZone1.risk === 'safe' ? '● NOMINAL' : `⚠️ ${activeZone1.risk.toUpperCase()}`) : (isGateBCongested ? '⚠️ CONGESTED' : '● NOMINAL');
+
+  const isCam2Focused = selectedZoneId === 'west_gate_d';
+  const activeZone2 = isCam2Focused ? state.stadium.zones.find(z => z.id === 'west_gate_d') : null;
+  const c2Density = activeZone2 ? Math.round(activeZone2.density * 100) : Math.round((state.stadium.zones.find(z => z.id === 'west_gate_d')?.density ?? 0) * 100);
+
+  const isCam3Focused = selectedZoneId === 'concourse_main';
+  const activeZone3 = isCam3Focused ? state.stadium.zones.find(z => z.id === 'concourse_main') : null;
+
+  const isCam4Focused = selectedZoneId !== null && ['field_level', 'lower_bowl', 'upper_bowl'].includes(selectedZoneId);
+  const activeZone4 = isCam4Focused ? state.stadium.zones.find(z => z.id === selectedZoneId) : null;
+  const c4Name = activeZone4 ? activeZone4.name.toUpperCase() : 'SECTION 112 AID';
 
   const foodQueueMin = Math.round(state.metrics.occupancy / 10000 + 4);
   const restroomQueueMin = Math.round(state.metrics.occupancy / 12000 + 2);
@@ -155,11 +175,20 @@ export default function CommandCenter({ state, sendMessage }: Props) {
       {/* Row 2: AI CCTV Camera Feed System */}
       <div className="glass-card" style={{ padding: '16px', borderLeft: '4px solid var(--accent-cyan)' }}>
         <div style={{
-          fontFamily: 'Orbitron, monospace', fontSize: '12px', fontWeight: 700,
-          color: 'var(--accent-cyan)', borderBottom: '1px solid var(--border)',
-          paddingBottom: '6px', marginBottom: '12px', letterSpacing: '0.05em'
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px'
         }}>
-          📹 AEGIS OS — LIVE AI CCTV CAMERA FEED SYSTEM
+          <div style={{
+            fontFamily: 'Orbitron, monospace', fontSize: '12px', fontWeight: 700,
+            color: 'var(--accent-cyan)', letterSpacing: '0.05em'
+          }}>
+            📹 AEGIS OS — LIVE AI CCTV CAMERA FEED SYSTEM
+          </div>
+          {selectedZoneId && (
+            <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--accent-cyan)', animation: 'pulse 2s infinite' }}>
+              🎯 FOCUS ACTIVE: {state.stadium.zones.find(z => z.id === selectedZoneId)?.name.toUpperCase()}
+            </div>
+          )}
         </div>
         <div style={{
           display: 'grid',
@@ -167,35 +196,60 @@ export default function CommandCenter({ state, sendMessage }: Props) {
           gap: '12px'
         }}>
           {/* Cam 1 */}
-          <div style={{ background: 'rgba(0,0,0,0.4)', border: `1.5px solid ${isGateBCongested ? 'var(--accent-red)' : 'var(--border)'}`, borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px', position: 'relative' }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.4)',
+            border: isCam1Focused ? '1.5px solid var(--accent-cyan)' : `1.5px solid ${isGateBCongested ? 'var(--accent-red)' : 'var(--border)'}`,
+            boxShadow: isCam1Focused ? '0 0 10px rgba(0, 212, 255, 0.25)' : 'none',
+            borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px', position: 'relative'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
-              <span style={{ color: 'white', fontWeight: 700 }}>CAM 01 - GATE B</span>
-              <span style={{ color: isGateBCongested ? 'var(--accent-red)' : 'var(--accent-green)', fontWeight: 700, animation: isGateBCongested ? 'pulse 1s infinite' : 'none' }}>
-                {isGateBCongested ? '⚠️ CONGESTED' : '● NOMINAL'}
+              <span style={{ color: isCam1Focused ? 'var(--accent-cyan)' : 'white', fontWeight: 700 }}>
+                CAM 01 - {c1Name} {isCam1Focused && '🎯'}
+              </span>
+              <span style={{ color: isCam1Focused ? 'var(--accent-cyan)' : (isGateBCongested ? 'var(--accent-red)' : 'var(--accent-green)'), fontWeight: 700 }}>
+                {c1Status}
               </span>
             </div>
-            <div>DENSITY: <span style={{ color: 'white' }}>{Math.round(gateBDensity * 100)}%</span></div>
-            <div>OBJECTS DETECTED: <span style={{ color: 'white' }}>{isGateBCongested ? '432' : '124'} fans</span></div>
-            <div>ABNORMAL ACTION: <span style={{ color: 'white' }}>{isGateBCongested ? 'CRUSH RISK' : 'None'}</span></div>
-            <div style={{ marginTop: '4px', color: 'var(--accent-cyan)' }}>REC: {isGateBCongested ? 'REDIRECT GATE D' : 'MAINTAIN FLOW'}</div>
+            <div>DENSITY: <span style={{ color: 'white' }}>{c1Density}%</span></div>
+            <div>OBJECTS DETECTED: <span style={{ color: 'white' }}>{c1Objects} fans</span></div>
+            <div>ABNORMAL ACTION: <span style={{ color: 'white' }}>{activeZone1?.risk === 'critical' ? 'CRUSH RISK' : 'None'}</span></div>
+            <div style={{ marginTop: '4px', color: 'var(--accent-cyan)' }}>
+              REC: {isCam1Focused ? (activeZone1?.risk === 'critical' ? 'REDIRECT OVERFLOW' : 'MAINTAIN FLOW') : (isGateBCongested ? 'REDIRECT GATE D' : 'MAINTAIN FLOW')}
+            </div>
           </div>
           {/* Cam 2 */}
-          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1.5px solid var(--border)', borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.4)',
+            border: isCam2Focused ? '1.5px solid var(--accent-cyan)' : '1.5px solid var(--border)',
+            boxShadow: isCam2Focused ? '0 0 10px rgba(0, 212, 255, 0.25)' : 'none',
+            borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
-              <span style={{ color: 'white', fontWeight: 700 }}>CAM 02 - GATE D CORRIDOR</span>
-              <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>● RUNNING</span>
+              <span style={{ color: isCam2Focused ? 'var(--accent-cyan)' : 'white', fontWeight: 700 }}>
+                CAM 02 - GATE D CORRIDOR {isCam2Focused && '🎯'}
+              </span>
+              <span style={{ color: isCam2Focused ? 'var(--accent-cyan)' : 'var(--accent-green)', fontWeight: 700 }}>
+                {isCam2Focused ? '● FOCUSED' : '● RUNNING'}
+              </span>
             </div>
-            <div>DENSITY: <span style={{ color: 'white' }}>{Math.round((state.stadium.zones.find(z => z.id === 'west_gate_d')?.density ?? 0) * 100)}%</span></div>
+            <div>DENSITY: <span style={{ color: 'white' }}>{c2Density}%</span></div>
             <div>VOLUNTEERS ACTIVE: <span style={{ color: 'white' }}>14 guides</span></div>
             <div>REDIRECT RATE: <span style={{ color: 'white' }}>340/min</span></div>
             <div style={{ marginTop: '4px', color: 'var(--accent-green)' }}>FLOW RATE: NOMINAL</div>
           </div>
           {/* Cam 3 */}
-          <div style={{ background: 'rgba(0,0,0,0.4)', border: `1.5px solid ${isStormActive ? 'var(--accent-orange)' : 'var(--border)'}`, borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.4)',
+            border: isCam3Focused ? '1.5px solid var(--accent-cyan)' : `1.5px solid ${isStormActive ? 'var(--accent-orange)' : 'var(--border)'}`,
+            boxShadow: isCam3Focused ? '0 0 10px rgba(0, 212, 255, 0.25)' : 'none',
+            borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
-              <span style={{ color: 'white', fontWeight: 700 }}>CAM 03 - MAIN CONCOURSE</span>
-              <span style={{ color: isStormActive ? 'var(--accent-orange)' : 'var(--accent-green)', fontWeight: 700 }}>
-                {isStormActive ? '🌧️ SHELTER ACTIVE' : '● NOMINAL'}
+              <span style={{ color: isCam3Focused ? 'var(--accent-cyan)' : 'white', fontWeight: 700 }}>
+                CAM 03 - MAIN CONCOURSE {isCam3Focused && '🎯'}
+              </span>
+              <span style={{ color: isCam3Focused ? 'var(--accent-cyan)' : (isStormActive ? 'var(--accent-orange)' : 'var(--accent-green)'), fontWeight: 700 }}>
+                {isCam3Focused ? '● FOCUSED' : (isStormActive ? '🌧️ SHELTER ACTIVE' : '● NOMINAL')}
               </span>
             </div>
             <div>SHELTER RATIO: <span style={{ color: 'white' }}>{Math.round((state.stadium.zones.find(z => z.id === 'concourse_main')?.density ?? 0) * 100)}%</span></div>
@@ -204,10 +258,19 @@ export default function CommandCenter({ state, sendMessage }: Props) {
             <div style={{ marginTop: '4px', color: 'var(--accent-cyan)' }}>REC: {isStormActive ? 'HVAC ACTIVE' : 'MONITOR TEMP'}</div>
           </div>
           {/* Cam 4 */}
-          <div style={{ background: 'rgba(0,0,0,0.4)', border: '1.5px solid var(--border)', borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px' }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.4)',
+            border: isCam4Focused ? '1.5px solid var(--accent-cyan)' : '1.5px solid var(--border)',
+            boxShadow: isCam4Focused ? '0 0 10px rgba(0, 212, 255, 0.25)' : 'none',
+            borderRadius: '6px', padding: '10px', fontFamily: 'Space Mono, monospace', fontSize: '9px'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px', marginBottom: '6px' }}>
-              <span style={{ color: 'white', fontWeight: 700 }}>CAM 04 - SECTION 112 AID</span>
-              <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>● READY</span>
+              <span style={{ color: isCam4Focused ? 'var(--accent-cyan)' : 'white', fontWeight: 700 }}>
+                CAM 04 - {c4Name} {isCam4Focused && '🎯'}
+              </span>
+              <span style={{ color: isCam4Focused ? 'var(--accent-cyan)' : 'var(--accent-green)', fontWeight: 700 }}>
+                {isCam4Focused ? '● FOCUSED' : '● READY'}
+              </span>
             </div>
             <div>MEDICS ACTIVE: <span style={{ color: 'white' }}>{state.metrics.medicalAlerts > 0 ? '8 staff' : '5 staff'}</span></div>
             <div>HEAT ALERTS: <span style={{ color: 'white' }}>{state.metrics.medicalAlerts}</span></div>

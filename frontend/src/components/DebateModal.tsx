@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DebateState, DebateArgument } from '../types/aegis';
 
 interface Props {
@@ -16,13 +16,12 @@ function PhaseStep({ phase, current }: { phase: string; current: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
       <div style={{
         width: 28, height: 28, borderRadius: '50%',
-        border: `2px solid ${isDone ? 'var(--accent-green)' : isActive ? 'var(--accent-amber)' : 'var(--text-muted)'}`,
+        border: `2px solid ${isDone ? 'var(--accent-green)' : isActive ? 'var(--accent-amber)' : 'var(--border)'}`,
         background: isDone ? 'var(--accent-green)' : isActive ? 'rgba(255,179,0,0.15)' : 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 11,
         color: isDone ? 'var(--bg-deep)' : isActive ? 'var(--accent-amber)' : 'var(--text-muted)',
         fontWeight: 700,
-        animation: isActive ? 'pulse 2s ease-in-out infinite' : 'none',
         transition: 'all 0.4s ease',
       }}>{isDone ? '✓' : idx + 1}</div>
       <span style={{
@@ -37,32 +36,29 @@ function PhaseStep({ phase, current }: { phase: string; current: string }) {
 }
 
 function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: number; visible: boolean }) {
-  const isEven = index % 2 === 0;
   return (
     <div style={{
       borderLeft: `4px solid ${arg.color}`,
-      background: `${arg.color}08`,
-      borderRadius: '0 10px 10px 0',
+      background: 'rgba(255, 255, 255, 0.02)',
+      borderRadius: '0 8px 8px 0',
       padding: '12px 16px',
       opacity: visible ? 1 : 0,
-      animation: visible ? `${isEven ? 'slideInLeft' : 'slideInRight'} 0.4s ease-out forwards` : 'none',
-      animationDelay: `${index * 0.15}s`,
       transition: 'opacity 0.3s ease',
-      boxShadow: `0 0 20px ${arg.color}10`,
+      boxShadow: `0 0 15px ${arg.color}10`,
+      marginBottom: '10px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <div style={{
           width: 8, height: 8, borderRadius: '50%',
           background: arg.color,
           boxShadow: `0 0 8px ${arg.color}`,
-          animation: 'pulse 2s ease-in-out infinite',
           flexShrink: 0,
         }} />
         <span style={{
           fontFamily: 'Orbitron, monospace',
           fontSize: 11,
           fontWeight: 700,
-          color: 'var(--text-primary)',
+          color: 'white',
         }}>{arg.agentName}</span>
         <span style={{
           padding: '2px 8px',
@@ -77,7 +73,7 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
         }}>{arg.confidence}% CONF</span>
       </div>
       <div style={{
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: 600,
         color: 'var(--text-primary)',
         marginBottom: 6,
@@ -93,7 +89,7 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
       {(arg.evidence || arg.risk || arg.expectedBenefit) && (
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 4,
-          padding: '6px 10px', background: 'rgba(255,255,255,0.02)',
+          padding: '6px 10px', background: 'rgba(0,0,0,0.2)',
           borderRadius: 6, fontSize: 10, fontFamily: 'Space Mono, monospace'
         }}>
           {arg.evidence && (
@@ -120,24 +116,73 @@ function ArgumentCard({ arg, index, visible }: { arg: DebateArgument; index: num
 export default function DebateModal({ debate }: Props) {
   const [visibleArgs, setVisibleArgs] = useState(0);
   const [closedByUser, setClosedByUser] = useState(false);
+  const [collectProgress, setCollectProgress] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!debate) { setVisibleArgs(0); setClosedByUser(false); return; }
+    if (!debate) { setVisibleArgs(0); setClosedByUser(false); setCollectProgress(0); return; }
     setVisibleArgs(0);
     setClosedByUser(false);
-    const interval = setInterval(() => {
-      setVisibleArgs(prev => {
-        if (prev >= debate.arguments.length) { clearInterval(interval); return prev; }
-        return prev + 1;
-      });
-    }, 400);
-    return () => clearInterval(interval);
-  }, [debate?.topic]);
+    setCollectProgress(0);
+
+    if (debate.phase === 'collecting') {
+      const interval = setInterval(() => {
+        setCollectProgress(prev => {
+          if (prev >= 100) { clearInterval(interval); return 100; }
+          return prev + 12;
+        });
+      }, 300);
+      return () => clearInterval(interval);
+    } else {
+      setCollectProgress(100);
+      const interval = setInterval(() => {
+        setVisibleArgs(prev => {
+          if (prev >= debate.arguments.length) { clearInterval(interval); return prev; }
+          return prev + 1;
+        });
+      }, 400);
+      return () => clearInterval(interval);
+    }
+  }, [debate?.topic, debate?.phase]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [visibleArgs, debate?.phase]);
 
   if (!debate || closedByUser) return null;
 
-  const isDecided = debate.phase === 'decided';
-  const isDeciding = debate.phase === 'deciding';
+  const isGateB = debate.topic.includes('Gate B') || debate.topic.includes('congestion');
+  const isStorm = debate.topic.includes('Storm') || debate.topic.includes('Weather');
+
+  const evidenceChecklist = isGateB ? [
+    { label: "CCTV Cam 01 (Gate B) - Density: 91% (Critical Bottleneck)", done: collectProgress >= 20 },
+    { label: "Metro Ingress Telemetry - Rate: +1,200 fans/min (Arrival wave)", done: collectProgress >= 40 },
+    { label: "Gate B Turnstile Log - Active validations: 18/24", done: collectProgress >= 60 },
+    { label: "RFID Ticket Scanners - 4,200 fans in boundary vicinity", done: collectProgress >= 80 },
+    { label: "Environmental Feed - Temperature: 39°C (Elevated heat stress)", done: collectProgress >= 90 },
+    { label: "Dispatch Database - 14 Volunteers available within 200m", done: collectProgress >= 100 },
+  ] : [
+    { label: "Concourse Main Sensors - Occupancy density: 91%", done: collectProgress >= 20 },
+    { label: "Weather Station API - Heavy rain hits stadium. Temp: 29°C", done: collectProgress >= 40 },
+    { label: "Medical Center Incident log - 3 active slip-fall alerts", done: collectProgress >= 60 },
+    { label: "Transit Release Metrics - Metro release demand surge: +340%", done: collectProgress >= 80 },
+    { label: "Smart Energy Grid - HVAC load: 3.1 MW (Battery reserve active)", done: collectProgress >= 90 },
+    { label: "PA Translation Matrix - 11 localized language streams ready", done: collectProgress >= 100 },
+  ];
+
+  const debateLogs = isGateB ? [
+    { id: 1, agentName: "Crowd Agent", color: "var(--accent-red)", text: "Gate B density exceeded 90%. Stampede probability: 23%. Request immediate Gate closure." },
+    { id: 2, agentName: "Transport Agent", color: "var(--accent-amber)", text: "Oppose full Gate B closure. 4,200 fans incoming from Metro exits. Closure creates severe outdoor crush." },
+    { id: 3, agentName: "Security Agent", color: "var(--accent-blue)", text: "Compromise proposal: Activate single-file check-in at Gate B to limit ingress rate, divert overflow to Gate D." },
+    { id: 4, agentName: "Volunteer Agent", color: "var(--accent-green)", text: "Guidance check: 14 corridor volunteers available. Divert corridor path B-to-D is viable within 3 minutes." }
+  ] : [
+    { id: 1, agentName: "Medical Agent", color: "var(--accent-red)", text: "Wet surfaces. 3 active slip-falls registered. Pre-positioning 8 medics at covered exits immediately." },
+    { id: 2, agentName: "Transport Agent", color: "var(--accent-amber)", text: "Metro release queue spiking. Dispatches increased to 90-second frequency. 6 extra trains running." },
+    { id: 3, agentName: "Energy Agent", color: "var(--accent-blue)", text: "Energy grid peak load 3.1MW. Boost concourse HVAC by 35% to counter wet hypothermia. Battery active." },
+    { id: 4, agentName: "Volunteer Agent", color: "var(--accent-green)", text: "Deploying 23 reserve volunteers to concourses to manage high density crowd distribution." }
+  ];
 
   return (
     <div style={{
@@ -146,17 +191,20 @@ export default function DebateModal({ debate }: Props) {
       backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 20,
-      animation: 'fadeIn 0.4s ease-out',
+      animation: 'fadeIn 0.3s ease-out',
     }}>
       <div className="glass-card-bright" style={{
-        maxWidth: 800,
+        maxWidth: 860,
         width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
+        maxHeight: '92vh',
+        overflow: 'hidden',
         padding: 0,
-        boxShadow: '0 0 60px rgba(0,212,255,0.2), 0 0 120px rgba(0,212,255,0.05)',
-        border: '1px solid var(--border-bright)',
+        boxShadow: '0 0 60px rgba(0,212,255,0.25)',
+        border: '1.5px solid var(--border-bright)',
         position: 'relative',
+        background: '#04060c',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {/* Header */}
         <div style={{
@@ -165,28 +213,29 @@ export default function DebateModal({ debate }: Props) {
           background: 'rgba(0,212,255,0.02)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <span style={{ fontSize: 28 }}>⚔</span>
+            <span style={{ fontSize: 24, animation: 'pulse 1s infinite' }}>🤖</span>
             <div>
               <div style={{
                 fontFamily: 'Orbitron, monospace',
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 900,
-                background: 'linear-gradient(135deg, var(--accent-amber), #ffcc00)',
+                background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
                 letterSpacing: '0.1em',
-              }}>AGENT DEBATE</div>
+              }}>AEGIS OS — AI EXPLAINABILITY & REASONING CONSOLE</div>
               <div style={{
                 color: 'var(--text-secondary)',
-                fontSize: 12,
+                fontSize: 11,
                 marginTop: 2,
-                fontStyle: 'italic',
-              }}>{debate.topic}</div>
+                fontFamily: 'Space Mono, monospace'
+              }}>TOPIC FOCUS: {debate.topic.toUpperCase()}</div>
             </div>
           </div>
-          {/* Phase steps */}
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 12 }}>
+          
+          {/* Phase Steps progress */}
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 16 }}>
             {PHASES.map((phase, i) => (
               <React.Fragment key={phase}>
                 <PhaseStep phase={phase} current={debate.phase} />
@@ -205,120 +254,261 @@ export default function DebateModal({ debate }: Props) {
           </div>
         </div>
 
-        {/* Arguments */}
-        <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {debate.arguments.map((arg, i) => (
-            <ArgumentCard key={arg.agentId} arg={arg} index={i} visible={i < visibleArgs} />
-          ))}
-
-          {/* Deciding spinner */}
-          {isDeciding && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              gap: 12, padding: '24px 0',
-            }}>
-              <div style={{
-                width: 48, height: 48,
-                border: '3px solid transparent',
-                borderTopColor: 'var(--accent-amber)',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
-              <div style={{
-                fontFamily: 'Orbitron, monospace',
-                fontSize: 12,
-                color: 'var(--accent-amber)',
-                animation: 'pulse 1.5s ease-in-out infinite',
-                letterSpacing: '0.1em',
-              }}>Executive Agent synthesizing final decision...</div>
-            </div>
-          )}
-
-          {/* Final Decision */}
-          {isDecided && debate.finalDecision && (
-            <div style={{
-              background: 'rgba(255,179,0,0.05)',
-              border: '1px solid rgba(255,179,0,0.3)',
-              borderRadius: 12,
-              padding: '20px',
-              animation: 'slideInUp 0.6s ease-out',
-              boxShadow: '0 0 30px rgba(255,179,0,0.15)',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <span style={{ fontSize: 24 }}>👑</span>
-                <div>
-                  <div style={{
-                    fontFamily: 'Orbitron, monospace',
-                    fontSize: 13,
-                    fontWeight: 900,
-                    color: 'var(--accent-amber)',
-                    letterSpacing: '0.08em',
-                  }}>EXECUTIVE AGENT — FINAL DECISION</div>
-                </div>
-                <div style={{
-                  marginLeft: 'auto',
-                  fontFamily: 'Orbitron, monospace',
-                  fontSize: 32,
-                  fontWeight: 900,
-                  color: 'var(--accent-green)',
-                  textShadow: '0 0 20px var(--accent-green)',
-                }}>{debate.finalDecision.confidence}%</div>
+        {/* Console View Area */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }} ref={scrollRef}>
+          
+          {/* PHASE 1: COLLECTING EVIDENCE */}
+          {debate.phase === 'collecting' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-cyan)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                📡 PHASE 1: COLLECTING OPERATIONAL EVIDENCE
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{
-                  fontFamily: 'Orbitron, monospace',
-                  fontSize: 10,
-                  color: 'var(--text-muted)',
-                  letterSpacing: '0.1em',
-                  marginBottom: 8,
-                }}>ACTIONS</div>
-                {debate.finalDecision.actions.map((action, i) => (
-                  <div key={i} style={{
-                    display: 'flex', gap: 8, alignItems: 'flex-start',
-                    marginBottom: 4, fontSize: 12, color: 'var(--text-primary)',
-                  }}>
-                    <span style={{ color: 'var(--accent-green)', fontWeight: 700, flexShrink: 0 }}>✓ {i + 1}.</span>
-                    <span>{action}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {evidenceChecklist.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, fontFamily: 'Space Mono', color: item.done ? 'white' : 'var(--text-muted)' }}>
+                    <span style={{ color: item.done ? 'var(--accent-green)' : 'var(--accent-amber)', fontWeight: 'bold' }}>
+                      {item.done ? '✓ READY' : '⏳ SYNCING...'}
+                    </span>
+                    <span>{item.label}</span>
                   </div>
                 ))}
               </div>
+
+              {/* Progress bar */}
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--text-muted)', marginBottom: 4 }}>
+                  <span>EVIDENCE SYNC INDEX</span>
+                  <span>{Math.min(collectProgress, 100)}%</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(collectProgress, 100)}%`, height: '100%', background: 'var(--accent-cyan)', transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+
+              {/* Simulated terminal activity logs */}
               <div style={{
-                fontSize: 12,
-                color: 'var(--text-secondary)',
-                fontStyle: 'italic',
-                marginBottom: 8,
-                lineHeight: 1.5,
-              }}><strong style={{ color: 'var(--accent-cyan)' }}>Expected:</strong> {debate.finalDecision.expectedOutcome}</div>
-              <div style={{
-                fontSize: 11,
-                color: 'var(--text-secondary)',
-                lineHeight: 1.5,
-              }}>{debate.finalDecision.reasoning}</div>
+                background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 6,
+                padding: 12, fontFamily: 'Space Mono', fontSize: 10, color: 'var(--accent-cyan)',
+                display: 'flex', flexDirection: 'column', gap: 4
+              }}>
+                <div>[12:02:00] Initializing Strategic Reasoner Kernel...</div>
+                {collectProgress >= 40 && <div>[12:02:01] Binding cameras & sensor loops...</div>}
+                {collectProgress >= 80 && <div>[12:02:02] Analyzing ticketing databases & GPS profiles...</div>}
+                {collectProgress >= 90 && <div>[12:02:03] Strategic analysis loaded. Formulating agent arguments...</div>}
+              </div>
             </div>
           )}
+
+          {/* PHASE 2: DEBATING */}
+          {debate.phase === 'debating' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20, animation: 'fadeIn 0.3s ease-out' }}>
+              <div>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: 12 }}>
+                  🤖 ACTIVE AGENT PROPOSALS
+                </div>
+                {debate.arguments.map((arg, i) => (
+                  <ArgumentCard key={arg.agentId} arg={arg} index={i} visible={i < visibleArgs} />
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: 12 }}>
+                  💬 TRANSCRIPT DEBATE FEED
+                </div>
+                <div style={{
+                  flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
+                  borderRadius: 6, padding: '12px', display: 'flex', flexDirection: 'column', gap: 12,
+                  fontFamily: 'Space Mono', fontSize: '10px', overflowY: 'auto'
+                }}>
+                  {debateLogs.map((log, i) => {
+                    const isVisible = i < visibleArgs;
+                    return (
+                      <div key={log.id} style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.3s ease', borderBottom: '1px dashed rgba(255,255,255,0.05)', paddingBottom: 6 }}>
+                        <span style={{ color: log.color, fontWeight: 700 }}>{log.agentName}:</span>
+                        <div style={{ color: 'white', marginTop: 3, lineHeight: 1.4 }}>{log.text}</div>
+                      </div>
+                    );
+                  })}
+                  {visibleArgs < debateLogs.length && (
+                    <div style={{ color: 'var(--accent-amber)', animation: 'pulse 1s infinite' }}>
+                      ⏳ Agent is formulating counterproposal...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PHASE 3: DECIDING */}
+          {debate.phase === 'deciding' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-amber)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                ⚖️ PHASE 3: EVALUATING PROPOSALS & UTILITY MATRIX
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {isGateB ? (
+                  <>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Space Mono', color: 'white', marginBottom: 4 }}>
+                        <span>Crowd proposal: Full Gate B closure</span>
+                        <span style={{ color: 'var(--accent-red)' }}>Utility: 54% (REJECTED - causes crush outside)</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: '54%', height: '100%', background: 'var(--accent-red)' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Space Mono', color: 'white', marginBottom: 4 }}>
+                        <span>Transport proposal: Maintain open flow</span>
+                        <span style={{ color: 'var(--accent-amber)' }}>Utility: 62% (REJECTED - doesn't solve gate bottleneck)</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: '62%', height: '100%', background: 'var(--accent-amber)' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Space Mono', color: 'white', marginBottom: 4 }}>
+                        <span>Combined operations redirection (Escorted single-file + diversion to Gate D)</span>
+                        <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Utility: 96% (WINNER - Consensus Authorized)</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: '96%', height: '100%', background: 'var(--accent-green)' }} />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Space Mono', color: 'white', marginBottom: 4 }}>
+                        <span>Local ambulance dispatch only</span>
+                        <span style={{ color: 'var(--accent-red)' }}>Utility: 74% (Partially integrated)</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: '74%', height: '100%', background: 'var(--accent-red)' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontFamily: 'Space Mono', color: 'white', marginBottom: 4 }}>
+                        <span>Multi-system Storm response (HVAC + Medical pre-position + Extra trains)</span>
+                        <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>Utility: 94% (WINNER - Consensus Authorized)</span>
+                      </div>
+                      <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ width: '94%', height: '100%', background: 'var(--accent-green)' }} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '16px 0' }}>
+                <div style={{
+                  width: 32, height: 32,
+                  border: '2px solid transparent',
+                  borderTopColor: 'var(--accent-amber)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+                <div style={{ fontFamily: 'Orbitron', fontSize: 11, color: 'var(--accent-amber)', letterSpacing: '0.05em' }}>
+                  Evaluating consensus matrix...
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PHASE 4: DECIDED */}
+          {debate.phase === 'decided' && debate.finalDecision && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeIn 0.3s ease-out' }}>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '12px', color: 'var(--accent-green)', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                👑 PHASE 4: DECISION DEPLOYING & ACTIONS AUTHORIZED
+              </div>
+
+              <div style={{
+                background: 'rgba(25, 255, 129, 0.03)',
+                border: '1.5px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: 8,
+                padding: '16px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontFamily: 'Orbitron', fontSize: '13px', fontWeight: 900, color: 'var(--accent-green)' }}>
+                      EXECUTIVE DECISION DEPLOYED SUCCESSFULLY
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'Space Mono', marginTop: 2 }}>
+                      Simulation story state synchronized.
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: 'Orbitron', fontSize: '24px', fontWeight: 900, color: 'var(--accent-green)', textShadow: '0 0 10px rgba(16,185,129,0.3)' }}>
+                      {debate.finalDecision.confidence}%
+                    </div>
+                    <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'Space Mono' }}>AI CONFIDENCE</span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px dashed rgba(16, 185, 129, 0.2)', paddingTop: '10px' }}>
+                  <div style={{ fontFamily: 'Orbitron', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 8 }}>
+                    AUTHORIZED EXECUTION PATH
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {debate.finalDecision.actions.map((action, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8, fontSize: '11px', color: 'white', fontFamily: 'Space Mono' }}>
+                        <span style={{ color: 'var(--accent-green)' }}>[{i + 1}]</span>
+                        <span>{action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px dashed rgba(16, 185, 129, 0.2)', paddingTop: '10px', fontSize: 11, fontFamily: 'Space Mono' }}>
+                  <div>
+                    <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>EXPECTED OUTCOME: </span>
+                    <span style={{ color: 'white' }}>{debate.finalDecision.expectedOutcome}</span>
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>RATIONALE: </span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{debate.finalDecision.reasoning}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* Close button - only when decided */}
-        {isDecided && (
-          <div style={{
-            position: 'absolute', top: 12, right: 12,
-          }}>
+        {/* Close Button Footer */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid var(--border)',
+          background: 'rgba(0,212,255,0.01)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 12
+        }}>
+          {debate.phase === 'decided' ? (
             <button
               onClick={() => setClosedByUser(true)}
               style={{
-                width: 32, height: 32,
-                borderRadius: '50%',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-muted)',
-                fontSize: 16,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                background: 'var(--accent-blue)', color: 'black',
+                border: 'none', borderRadius: '4px', padding: '8px 24px',
+                fontFamily: 'Orbitron', fontSize: '11px', fontWeight: 900,
+                cursor: 'pointer', boxShadow: '0 0 15px rgba(0, 212, 255, 0.3)',
+                letterSpacing: '0.05em'
               }}
-            >✕</button>
-          </div>
-        )}
+            >
+              DISMISS & RESUME MONITORING
+            </button>
+          ) : (
+            <div style={{ fontFamily: 'Space Mono', fontSize: '10px', color: 'var(--accent-amber)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="live-badge" style={{ background: 'rgba(255,179,0,0.1)', color: 'var(--accent-amber)', border: '1px solid var(--accent-amber)' }}>
+                ● STRATEGY ENGINE DEBATE RESOLUTION IN PROGRESS
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
