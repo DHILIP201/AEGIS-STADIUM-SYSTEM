@@ -938,7 +938,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
                 fontFamily: 'Space Mono, monospace', fontSize: '10px', color: 'var(--accent-cyan)',
                 textTransform: 'uppercase', letterSpacing: '0.05em'
               }}>
-                FIFA World Cup Stadium Operations • Match Governance Success
+                FIFA World Cup Stadium Operations • Match Governance Stable
               </div>
             </div>
 
@@ -960,7 +960,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               AEGIS OS successfully coordinated stadium operations, predicted operational risks before escalation, resolved every simulated incident, and maintained safe crowd movement throughout the FIFA World Cup event.
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--accent-green)' }}>
                 <span className="live-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', padding: '2px 8px', fontSize: '8px' }}>
-                  ● OVERALL MISSION ASSESSMENT: SUCCESS
+                  ● OVERALL MISSION STATUS: MISSION STABLE
                 </span>
               </div>
             </div>

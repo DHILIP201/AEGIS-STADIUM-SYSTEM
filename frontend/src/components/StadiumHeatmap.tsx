@@ -489,7 +489,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         ctx.fillStyle = selectedZoneTimer >= 5 ? 'var(--accent-green)' : (mitigationActive ? 'var(--accent-amber)' : 'var(--accent-green)');
         ctx.font = "bold 7px 'Space Mono', monospace";
         ctx.textAlign = 'right';
-        ctx.fillText(selectedZoneTimer >= 5 ? 'MISSION STABLE' : (mitigationActive ? 'MITIGATING' : 'NOMINAL MONITOR'), boxX + boxW - 10, boxY + 12);
+        ctx.fillText(selectedZoneTimer >= 5 ? 'MISSION STABLE' : (mitigationActive ? 'MITIGATION IN PROGRESS' : 'MISSION ACTIVE'), boxX + boxW - 10, boxY + 12);
 
         // Live Action Steps with Rationale
         const isCongested = zone.id === 'south_gate_b' && zone.density > 0.75;
