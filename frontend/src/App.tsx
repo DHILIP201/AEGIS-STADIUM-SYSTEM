@@ -917,7 +917,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div className="glass-card-bright" style={{
-            maxWidth: '680px', width: '100%', padding: '28px',
+            maxWidth: '720px', width: '100%', padding: '28px',
             border: '1.5px solid var(--accent-green)', borderRadius: '12px',
             background: '#04060c', boxShadow: '0 0 50px rgba(16, 185, 129, 0.3)',
             display: 'flex', flexDirection: 'column', gap: '16px',
@@ -942,62 +942,112 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               </div>
             </div>
 
+            {/* Executive Verdict Box */}
+            <div style={{
+              background: 'rgba(0, 212, 255, 0.03)',
+              border: '1.5px dashed rgba(0, 212, 255, 0.3)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              textAlign: 'center',
+              fontFamily: 'Space Mono, monospace',
+              fontSize: '11px',
+              lineHeight: '1.5',
+              color: 'white'
+            }}>
+              <div style={{ fontFamily: 'Orbitron', fontSize: '9px', color: 'var(--accent-cyan)', fontWeight: 900, letterSpacing: '0.1em', marginBottom: '4px' }}>
+                MISSION VERDICT
+              </div>
+              AEGIS OS successfully coordinated stadium operations, predicted operational risks before escalation, resolved every simulated incident, and maintained safe crowd movement throughout the FIFA World Cup event.
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--accent-green)' }}>
+                <span className="live-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', padding: '2px 8px', fontSize: '8px' }}>
+                  ● OVERALL MISSION ASSESSMENT: SUCCESS
+                </span>
+              </div>
+            </div>
+
             {/* Split layout: KPIs & Executive Summary */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '20px', alignItems: 'start'
+              display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '20px', alignItems: 'start'
             }}>
-              {/* Left Column: KPI metrics card */}
-              <div style={{
-                background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)',
-                borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column',
-                gap: '10px', fontFamily: 'Space Mono, monospace', fontSize: '11px'
-              }}>
-                <div style={{ fontFamily: 'Orbitron', fontSize: '10px', color: 'var(--text-muted)', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '6px', marginBottom: '4px' }}>
-                  OPERATIONAL METRICS
+              {/* Left Column: KPI metrics list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
+                  fontFamily: 'Space Mono, monospace', fontSize: '11px', textAlign: 'left'
+                }}>
+                  {/* KPI 1 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '8px', marginBottom: '4px' }}>
+                      <span style={{ color: 'var(--accent-green)' }}>●</span> AI ACCURACY
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: 'white', fontFamily: 'Orbitron' }}>
+                      <AnimatedNumber value={94.2} suffix="%" />
+                    </div>
+                    <div style={{ color: 'var(--accent-green)', fontSize: '8px', fontWeight: 700, marginTop: '2px' }}>EXCELLENT</div>
+                  </div>
+
+                  {/* KPI 2 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '8px', marginBottom: '4px' }}>
+                      <span style={{ color: 'var(--accent-green)' }}>●</span> SATISFACTION
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: 'white', fontFamily: 'Orbitron' }}>
+                      <AnimatedNumber value={96.0} suffix="%" />
+                    </div>
+                    <div style={{ color: 'var(--accent-green)', fontSize: '8px', fontWeight: 700, marginTop: '2px' }}>EXCELLENT</div>
+                  </div>
+
+                  {/* KPI 3 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '8px', marginBottom: '4px' }}>
+                      <span style={{ color: 'var(--accent-green)' }}>●</span> RESPONSE TIME
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: 'white', fontFamily: 'Orbitron' }}>
+                      <AnimatedNumber value={1.84} suffix="s" />
+                    </div>
+                    <div style={{ color: 'var(--accent-cyan)', fontSize: '8px', fontWeight: 700, marginTop: '2px' }}>TARGET ACHIEVED</div>
+                  </div>
+
+                  {/* KPI 4 */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '8px', marginBottom: '4px' }}>
+                      <span style={{ color: 'var(--accent-green)' }}>●</span> INCIDENTS
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: 'white', fontFamily: 'Orbitron' }}>
+                      7 / 7
+                    </div>
+                    <div style={{ color: 'var(--accent-green)', fontSize: '8px', fontWeight: 700, marginTop: '2px' }}>RESOLVED</div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Attendance:</span>
-                  <span style={{ color: 'white', fontWeight: 700 }}>80,455</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Incidents Detected:</span>
-                  <span style={{ color: 'white', fontWeight: 700 }}>7</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Incidents Resolved:</span>
-                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>7 / 7 (100%)</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>AI Decision Acc:</span>
-                  <span style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>
-                    <AnimatedNumber value={94.2} suffix="%" />
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Avg Response:</span>
-                  <span style={{ color: 'white', fontWeight: 700 }}>
-                    <AnimatedNumber value={1.84} suffix=" sec" />
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Crowd Satisfaction:</span>
-                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>
-                    <AnimatedNumber value={96} suffix="%" />
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Prediction Conf:</span>
-                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>
-                    <AnimatedNumber value={97} suffix="%" />
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Duration:</span>
-                  <span style={{ color: 'white', fontWeight: 700 }}>90 minutes</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '6px', marginTop: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>STATUS:</span>
-                  <span style={{ color: 'var(--accent-green)', fontWeight: 700 }}>★ SUCCESS</span>
+
+                {/* Professional Report Footer */}
+                <div style={{
+                  borderTop: '1px dashed rgba(255,255,255,0.1)',
+                  paddingTop: '12px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '8px 12px',
+                  fontFamily: 'Space Mono, monospace',
+                  fontSize: '8px',
+                  color: 'var(--text-muted)',
+                  textAlign: 'left'
+                }}>
+                  <div>
+                    GENERATED BY
+                    <div style={{ color: 'white', fontWeight: 700, marginTop: '2px' }}>AEGIS Cognitive Engine</div>
+                  </div>
+                  <div>
+                    SIMULATION
+                    <div style={{ color: 'white', fontWeight: 700, marginTop: '2px' }}>FIFA World Cup Operations</div>
+                  </div>
+                  <div>
+                    TIMESTAMP
+                    <div style={{ color: 'white', fontWeight: 700, marginTop: '2px' }}>Final Whistle</div>
+                  </div>
+                  <div>
+                    DIGITAL SIGNATURE
+                    <div style={{ color: 'var(--accent-green)', fontWeight: 700, marginTop: '2px' }}>Verified (OS v1.0)</div>
+                  </div>
                 </div>
               </div>
 
@@ -1008,7 +1058,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
                 </div>
                 <div style={{
                   background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                  borderRadius: '8px', padding: '14px', maxHeight: '180px', overflowY: 'auto',
+                  borderRadius: '8px', padding: '14px', maxHeight: '150px', overflowY: 'auto',
                   fontFamily: 'Space Mono, monospace', fontSize: '10.5px', color: 'var(--text-secondary)',
                   lineHeight: '1.6', textAlign: 'left'
                 }}>
@@ -1070,7 +1120,7 @@ ${state.blackbox.map(b => `- [${b.time}] [${b.type.toUpperCase()}] ${b.title}: $
               <button
                 onClick={() => setShowSuccessModal(false)}
                 style={{
-                  flex: 1, padding: '10px 16px', background: 'var(--accent-green)',
+                  flex: 1.5, padding: '10px 16px', background: 'var(--accent-green)',
                   border: 'none', borderRadius: '6px', color: 'black',
                   fontFamily: 'Orbitron, monospace', fontSize: '10px', fontWeight: 900, cursor: 'pointer',
                   boxShadow: '0 0 15px rgba(16, 185, 129, 0.3)', transition: 'all 0.2s ease'
