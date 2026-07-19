@@ -422,8 +422,8 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         const baseRadius = 18 + (zone.capacity / 600) * 14;
 
         // Box parameters
-        const boxW = 260;
-        const boxH = 230;
+        const boxW = 280;
+        const boxH = 300;
 
         // Smart position relative to zone to prevent overlay clipping
         let boxX = zx + baseRadius + 15;
@@ -491,7 +491,20 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         ctx.textAlign = 'right';
         ctx.fillText(selectedZoneTimer >= 5 ? 'MISSION STABLE' : (mitigationActive ? 'MITIGATION IN PROGRESS' : 'MISSION ACTIVE'), boxX + boxW - 10, boxY + 12);
 
-        // Live Action Steps with Rationale
+        // Current Incident Info
+        ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        ctx.fillRect(boxX + 10, boxY + 28, boxW - 20, 16);
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.strokeRect(boxX + 10, boxY + 28, boxW - 20, 16);
+
+        ctx.fillStyle = mitigationActive ? 'var(--accent-amber)' : 'var(--accent-green)';
+        ctx.font = "bold 7px 'Orbitron', monospace";
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const incidentText = zone.risk === 'critical' ? 'CRITICAL INCIDENT DETECTED' : (zone.risk === 'high' ? 'ELEVATED RISK ACTIVE' : 'SYSTEM STATUS NOMINAL');
+        ctx.fillText(incidentText, boxX + 16, boxY + 36);
+
+        // Live Action Steps / Mitigation Success Summary
         const isCongested = zone.id === 'south_gate_b' && zone.density > 0.75;
         const isStorm = (zone.id === 'concourse_main' || zone.id.includes('bowl')) && zone.risk !== 'safe';
 
@@ -503,8 +516,8 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         ];
         
         const congestedItems = [
-          { name: "Deploy 14 corridor guides", reason: "Preempts Gate B queue in 3 min" },
-          { name: "Open Gate D overflow lanes", reason: "Gate D spare capacity 59%" },
+          { name: "Deploy 14 corridor guides", reason: "Preempts queue overflow" },
+          { name: "Open Gate D overflow lanes", reason: "Gate D capacity available" },
           { name: "Update dynamic signage", reason: "Redirect 18% of arrivals" },
           { name: "Notify Fan Companion app", reason: "Push GPS detour route feeds" }
         ];
@@ -513,7 +526,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
           { name: "Boost concourse HVAC (+35%)", reason: "Mitigates hypothermia risk" },
           { name: "Position 8 emergency medics", reason: "Treat 3 active slip-fall alerts" },
           { name: "Dispatch extra Metro trains", reason: "Clear +340% exit demand spike" },
-          { name: "Deploy guides to shelters", reason: "Manage Concourse 91% bottleneck" }
+          { name: "Deploy guides to shelters", reason: "Manage Concourse bottleneck" }
         ];
 
         const items = isCongested ? congestedItems : (isStorm ? stormItems : defaultItems);
@@ -523,27 +536,27 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
           ctx.fillStyle = 'rgba(16, 185, 129, 0.05)';
           ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
           ctx.beginPath();
-          ctx.roundRect(boxX + 10, boxY + 30, boxW - 20, 102, 4);
+          ctx.roundRect(boxX + 10, boxY + 50, boxW - 20, 80, 4);
           ctx.fill();
           ctx.stroke();
 
           ctx.fillStyle = 'var(--accent-green)';
-          ctx.font = "bold 9px 'Orbitron', monospace";
+          ctx.font = "bold 8.5px 'Orbitron', monospace";
           ctx.textBaseline = 'top';
-          ctx.fillText("🏆 MISSION STABLE & RESOLVED", boxX + 20, boxY + 38);
+          ctx.textAlign = 'left';
+          ctx.fillText("🏆 MISSION STABLE & RESOLVED", boxX + 18, boxY + 56);
 
           ctx.fillStyle = 'white';
-          ctx.font = "7.5px 'Space Mono', monospace";
-          ctx.fillText(`• Incident: ${isCongested ? "Gate B Bottleneck" : isStorm ? "Concourse Storm Crush" : "Diagnostic Check"}`, boxX + 20, boxY + 54);
-          ctx.fillText(`• Density decay: ${isCongested ? "91% ➔ 58% (Resolved)" : isStorm ? "91% ➔ 72% (Sheltered)" : "Normal limits"}`, boxX + 20, boxY + 66);
-          ctx.fillText(`• Resolution time: ${isCongested ? "8 minutes" : isStorm ? "11 minutes" : "0s"}`, boxX + 20, boxY + 78);
-          ctx.fillText(`• Safety outcome: 100% stable, 0 serious injuries`, boxX + 20, boxY + 90);
-          ctx.fillText(`• Mitigation accuracy: 94.2% (Consensus match)`, boxX + 20, boxY + 102);
+          ctx.font = "7px 'Space Mono', monospace";
+          ctx.fillText(`• Incident: ${isCongested ? "Gate B Bottleneck" : isStorm ? "Concourse Storm Crush" : "Diagnostic Check"}`, boxX + 18, boxY + 72);
+          ctx.fillText(`• Density decay: ${isCongested ? "91% ➔ 58% (Resolved)" : isStorm ? "91% ➔ 72% (Sheltered)" : "Normal limits"}`, boxX + 18, boxY + 84);
+          ctx.fillText(`• Resolution time: ${isCongested ? "8 minutes" : isStorm ? "11 minutes" : "0s"}`, boxX + 18, boxY + 96);
+          ctx.fillText(`• Safety outcome: 100% stable, 0 serious injuries`, boxX + 18, boxY + 108);
         } else {
           // Render animated checklist items with Rationale
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
-          let itemY = boxY + 30;
+          let itemY = boxY + 50;
           items.forEach((item, index) => {
             let symbol = "⏳";
             let color = 'var(--text-muted)';
@@ -558,56 +571,75 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
             
             ctx.fillStyle = color;
             ctx.font = "bold 8px 'Space Mono', monospace";
-            ctx.fillText(symbol, boxX + 10, itemY);
+            ctx.fillText(symbol, boxX + 14, itemY);
             
             ctx.fillStyle = selectedZoneTimer >= index + 1 ? 'white' : 'var(--text-muted)';
-            ctx.font = "bold 8px 'Space Mono', monospace";
-            ctx.fillText(item.name, boxX + 24, itemY);
+            ctx.font = "bold 7.5px 'Space Mono', monospace";
+            ctx.fillText(item.name, boxX + 26, itemY);
             
             ctx.fillStyle = 'var(--text-muted)';
-            ctx.font = "7px 'Space Mono', monospace";
-            ctx.fillText(`Reason: ${item.reason}`, boxX + 24, itemY + 11);
+            ctx.font = "6.5px 'Space Mono', monospace";
+            ctx.fillText(`Reason: ${item.reason}`, boxX + 26, itemY + 10);
             
-            itemY += 26;
+            itemY += 21;
           });
         }
 
         // Timeline drawing
         ctx.fillStyle = 'var(--text-muted)';
         ctx.font = "bold 7px 'Space Mono', monospace";
-        ctx.fillText("OPERATIONAL EVENT TIMELINE", boxX + 10, boxY + 138);
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillText("OPERATIONAL TIMELINE", boxX + 10, boxY + 138);
 
-        const times = isCongested ? ["11:02:14 Crowd Spike", "11:02:17 Analysis", "11:02:33 Resolved"] : 
-                      isStorm ? ["11:14:02 Storm Hit", "11:14:06 Emergency", "11:14:18 Stable"] :
-                      ["12:00:00 Booting", "12:00:04 Monitoring", "12:00:15 Standby"];
+        const times = isCongested ? ["11:02 Surge", "11:03 Mitigating", "11:08 Stable"] : 
+                      isStorm ? ["11:14 Storm", "11:14 Emergency", "11:18 Stable"] :
+                      ["12:00 Booting", "12:00 Monitoring", "12:00 Standby"];
                       
         ctx.fillStyle = 'rgba(255,255,255,0.7)';
         ctx.font = "6.5px 'Space Mono', monospace";
         
-        let timelineText = `${times[0]}  ➔  ${times[1]}`;
-        if (selectedZoneTimer >= 5) {
-          timelineText += `  ➔  ${times[2]}`;
-        }
-        ctx.fillText(timelineText, boxX + 10, boxY + 148);
+        // Draw horizontal event flow
+        ctx.fillText(times[0], boxX + 10, boxY + 148);
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.fillText("➔", boxX + 68, boxY + 148);
+        ctx.fillStyle = selectedZoneTimer >= 2 ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)';
+        ctx.fillText(times[1], boxX + 80, boxY + 148);
+        
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.fillText("➔", boxX + 148, boxY + 148);
+        ctx.fillStyle = selectedZoneTimer >= 5 ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)';
+        ctx.fillText(times[2], boxX + 160, boxY + 148);
 
         // Evidence sources drawing
         ctx.fillStyle = 'var(--text-muted)';
         ctx.font = "bold 7px 'Space Mono', monospace";
-        ctx.fillText("DECISION EVIDENCE SOURCES", boxX + 10, boxY + 160);
+        ctx.fillText("EVIDENCE SOURCES", boxX + 10, boxY + 162);
         
-        const evidenceStr = isCongested ? "CCTV | TURNSTILES | TICKETS | TRANSPORT" :
-                            isStorm ? "CCTV | WEATHER | MEDICAL | ENERGY | METRO" :
-                            "CCTV | TURNSTILES | ENVIRONMENTAL";
-        ctx.fillStyle = 'var(--accent-cyan)';
-        ctx.font = "bold 7px 'Space Mono', monospace";
-        ctx.fillText(evidenceStr, boxX + 10, boxY + 170);
+        const evidenceBadges = isCongested ? ["CCTV", "TURNSTILES", "TICKETS", "METRO"] :
+                              isStorm ? ["CCTV", "WEATHER", "MEDICAL", "HVAC", "METRO"] :
+                              ["CCTV", "TURNSTILES", "ENVIRONMENT"];
+        
+        let badgeX = boxX + 10;
+        evidenceBadges.forEach(badge => {
+          ctx.font = "bold 6px 'Space Mono', monospace";
+          const badgeTextWidth = ctx.measureText(badge).width;
+          const badgeW = badgeTextWidth + 8;
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.06)';
+          ctx.beginPath();
+          ctx.roundRect(badgeX, boxY + 172, badgeW, 12, 2);
+          ctx.fill();
+          ctx.fillStyle = 'var(--accent-cyan)';
+          ctx.fillText(badge, badgeX + 4, boxY + 175);
+          badgeX += badgeW + 5;
+        });
 
         // Bottom Metrics separator
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(boxX + 10, boxY + boxH - 34);
-        ctx.lineTo(boxX + boxW - 10, boxY + boxH - 34);
+        ctx.moveTo(boxX + 10, boxY + boxH - 52);
+        ctx.lineTo(boxX + boxW - 10, boxY + boxH - 52);
         ctx.stroke();
 
         // Calculate dynamic crowd density decay values over time
@@ -626,27 +658,36 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
 
         const confidence = zone.risk === 'critical' ? 97 : (zone.risk === 'high' ? 91 : 95);
 
-        // Render bottom row KPIs
-        ctx.fillStyle = 'var(--text-muted)';
-        ctx.font = "7px 'Space Mono', monospace";
-        ctx.fillText("DENSITY", boxX + 10, boxY + boxH - 24);
-        ctx.fillStyle = zone.risk === 'critical' ? 'var(--accent-red)' : 'var(--accent-cyan)';
-        ctx.font = "bold 10px 'Space Mono', monospace";
-        ctx.fillText(`${currentDensity}%`, boxX + 10, boxY + boxH - 14);
+        // Render bottom row KPIs as 3 equal cards
+        const cardW = Math.floor((boxW - 28) / 3);
+        const cardH = 34;
+        const cardY = boxY + boxH - 42;
 
-        ctx.fillStyle = 'var(--text-muted)';
-        ctx.font = "7px 'Space Mono', monospace";
-        ctx.fillText("RESOLUTION ETA", boxX + 80, boxY + boxH - 24);
-        ctx.fillStyle = 'white';
-        ctx.font = "bold 10px 'Space Mono', monospace";
-        ctx.fillText(eta, boxX + 80, boxY + boxH - 14);
+        const kpis = [
+          { label: "DENSITY", val: `${currentDensity}%`, color: zone.risk === 'critical' ? 'var(--accent-red)' : 'var(--accent-cyan)' },
+          { label: "RESOLUTION ETA", val: eta, color: 'white' },
+          { label: "AI CONF", val: `${confidence}%`, color: 'var(--accent-green)' }
+        ];
 
-        ctx.fillStyle = 'var(--text-muted)';
-        ctx.font = "7px 'Space Mono', monospace";
-        ctx.fillText("DECISION CONF", boxX + 170, boxY + boxH - 24);
-        ctx.fillStyle = 'var(--accent-green)';
-        ctx.font = "bold 10px 'Space Mono', monospace";
-        ctx.fillText(`${confidence}%`, boxX + 170, boxY + boxH - 14);
+        kpis.forEach((kpi, idx) => {
+          const cardX = boxX + 10 + idx * (cardW + 4);
+          ctx.fillStyle = 'rgba(255,255,255,0.01)';
+          ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(cardX, cardY, cardW, cardH, 3);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = 'var(--text-muted)';
+          ctx.font = "bold 5.5px 'Space Mono', monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText(kpi.label, cardX + cardW / 2, cardY + 6);
+
+          ctx.fillStyle = kpi.color;
+          ctx.font = "bold 9px 'Orbitron', monospace";
+          ctx.fillText(kpi.val, cardX + cardW / 2, cardY + 18);
+        });
       }
     }
 
