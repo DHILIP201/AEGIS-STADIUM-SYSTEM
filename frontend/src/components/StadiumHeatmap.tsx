@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Zone } from '../types/aegis';
 
 interface Props {
@@ -59,6 +59,19 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
   const animFrameRef = useRef<number>(0);
   const glowPhaseRef = useRef(0);
   const particlesRef = useRef<Particle[]>([]);
+
+  // Selected Zone timer ticks up to animate mitigation steps sequentially
+  const [selectedZoneTimer, setSelectedZoneTimer] = useState(0);
+
+  useEffect(() => {
+    setSelectedZoneTimer(0);
+    if (selectedZoneId) {
+      const interval = setInterval(() => {
+        setSelectedZoneTimer(prev => Math.min(prev + 1, 8));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedZoneId]);
 
   // Initialize flow particles if needed
   const updateParticles = useCallback((cx: number, cy: number, W: number, H: number, gateBRedirect: boolean) => {
@@ -141,7 +154,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
     ctx.save();
     ctx.globalAlpha = isAnySelected ? 0.25 : 1.0;
 
-    // Subtle space grid background
+    // Subtle Grid
     ctx.strokeStyle = 'rgba(0,212,255,0.03)';
     ctx.lineWidth = 0.5;
     for (let x = 0; x < W; x += 25) {
@@ -185,7 +198,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Seating block sectors (Level 300, 200)
+    // Seating arcs
     ctx.strokeStyle = 'rgba(255,255,255,0.02)';
     ctx.lineWidth = 6;
     ctx.beginPath(); ctx.ellipse(cx, cy, shellW * 0.38, shellH * 0.38, 0, 0, Math.PI * 2); ctx.stroke();
@@ -193,7 +206,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
     ctx.lineWidth = 8;
     ctx.beginPath(); ctx.ellipse(cx, cy, shellW * 0.30, shellH * 0.30, 0, 0, Math.PI * 2); ctx.stroke();
 
-    // Emergency Evacuation / Exit signs
+    // Exits
     ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
     ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
     const exitPoints = [
@@ -206,7 +219,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
 
-    // FIELD Line Markings
+    // Pitch
     const fieldW = W * 0.32;
     const fieldH = H * 0.28;
     const fieldX = cx - fieldW / 2;
@@ -228,12 +241,11 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.fillStyle = p.color;
       ctx.fill();
     });
-    ctx.restore(); // Restore opacity for focused elements
+    ctx.restore();
 
-    // DRAW DYNAMIC FLOW ARROWS FOR THE SELECTED ZONE
+    // Draw flow arrows for focused zone
     if (isAnySelected) {
       const activeColor = 'var(--accent-cyan)';
-
       if (selectedZoneId === 'north_gate_a') {
         drawArrow(ctx, cx, 15, cx, cy - 80, activeColor, true);
         drawArrow(ctx, cx, cy - 80, cx, cy - 30, 'rgba(0, 212, 255, 0.6)');
@@ -265,7 +277,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       }
     }
 
-    // Draw redirect guidelines
+    // Default Gate B divert corridor
     if (isGateBRedirectionActive && !isAnySelected) {
       ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
       ctx.lineWidth = 2.5;
@@ -284,7 +296,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.fillText("DIVERT", arrowX, arrowY + 2.5);
     }
 
-    // Draw zone overlays
+    // Draw stadium zones
     zones.forEach(zone => {
       const zx = zone.x * W;
       const zy = zone.y * H;
@@ -293,28 +305,18 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       const isSelected = selectedZoneId === zone.id;
 
       ctx.save();
-      // Highlight selection or dim others
       if (isAnySelected) {
         ctx.globalAlpha = isSelected ? 1.0 : 0.2;
-      } else {
-        ctx.globalAlpha = 1.0;
       }
 
-      // Draw selector pulse ring if selected
       if (isSelected) {
         ctx.strokeStyle = 'var(--accent-cyan)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(zx, zy, baseRadius + 6 + glowPulse * 6, 0, Math.PI * 2);
-        ctx.stroke();
-        
+        ctx.beginPath(); ctx.arc(zx, zy, baseRadius + 6 + glowPulse * 6, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = 'rgba(0, 212, 255, 0.08)';
-        ctx.beginPath();
-        ctx.arc(zx, zy, baseRadius + 6 + glowPulse * 6, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(zx, zy, baseRadius + 6 + glowPulse * 6, 0, Math.PI * 2); ctx.fill();
       }
 
-      // Pulsing outer glow for warnings
       if (zone.risk === 'critical') {
         const glowRadius = baseRadius + 12 + glowPulse * 8;
         const grad = ctx.createRadialGradient(zx, zy, baseRadius * 0.5, zx, zy, glowRadius);
@@ -331,7 +333,6 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
         ctx.fillStyle = grad; ctx.fill();
       }
 
-      // Main circle
       ctx.beginPath();
       ctx.arc(zx, zy, baseRadius, 0, Math.PI * 2);
       ctx.fillStyle = rc.fill;
@@ -340,7 +341,6 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.lineWidth = isSelected ? 2.5 : (zone.risk === 'critical' ? 2.5 + glowPulse * 0.5 : 1.5);
       ctx.stroke();
 
-      // Zone texts
       const shortName = zone.name.split(' ').map((w: string) => w[0]).join('');
       ctx.fillStyle = 'rgba(255,255,255,0.95)';
       ctx.font = `bold 9px 'Space Mono', monospace`;
@@ -351,11 +351,10 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.font = `bold 8px 'Space Mono', monospace`;
       ctx.fillStyle = isSelected ? 'var(--accent-cyan)' : rc.stroke;
       ctx.fillText(`${Math.round(zone.density * 100)}%`, zx, zy + 6);
-
       ctx.restore();
     });
 
-    // Compass gate boxes
+    // Compass gates
     const gates = [
       { id: 'north_gate_a', label: 'GATE A', x: cx, y: shellY + 12 },
       { id: 'south_gate_b', label: 'GATE B', x: cx, y: shellY + shellH - 12 },
@@ -365,19 +364,14 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
     gates.forEach(gate => {
       const isSelected = selectedZoneId === gate.id;
       ctx.save();
-      if (isAnySelected) {
-        ctx.globalAlpha = isSelected ? 1.0 : 0.2;
-      }
+      if (isAnySelected) ctx.globalAlpha = isSelected ? 1.0 : 0.2;
       
       const tw = 48;
       const th = 14;
       ctx.fillStyle = 'rgba(3,4,10,0.95)';
       ctx.strokeStyle = isSelected ? 'var(--accent-cyan)' : ((gate.id === 'south_gate_b' && isGateBRedirectionActive) ? 'var(--accent-red)' : 'rgba(0,212,255,0.4)');
       ctx.lineWidth = isSelected ? 2.0 : ((gate.id === 'south_gate_b' && isGateBRedirectionActive) ? 1.5 : 1);
-      ctx.beginPath();
-      ctx.roundRect(gate.x - tw / 2, gate.y - th / 2, tw, th, 3);
-      ctx.fill();
-      ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(gate.x - tw / 2, gate.y - th / 2, tw, th, 3); ctx.fill(); ctx.stroke();
 
       ctx.fillStyle = isSelected ? 'var(--accent-cyan)' : ((gate.id === 'south_gate_b' && isGateBRedirectionActive) ? 'var(--accent-red)' : '#00d4ff');
       ctx.font = `bold 7px 'Space Mono', monospace`;
@@ -387,7 +381,7 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
       ctx.restore();
     });
 
-    // Draw Legend
+    // Legend
     ctx.save();
     if (isAnySelected) ctx.globalAlpha = 0.35;
     const legendItems = [
@@ -412,15 +406,195 @@ export default function StadiumHeatmap({ zones, stadiumName, selectedZoneId, onS
     });
     ctx.restore();
 
-    // Stadium title
+    // Title
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.font = `bold 10px 'Orbitron', monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(stadiumName.toUpperCase(), cx, shellY + 5);
 
+    // DRAW THE DYNAMIC HUD OVERLAY BOX FOR LIVE OPERATIONS INSIDE VISUALIZATION
+    if (selectedZoneId) {
+      const zone = zones.find(z => z.id === selectedZoneId);
+      if (zone) {
+        const zx = zone.x * W;
+        const zy = zone.y * H;
+        const baseRadius = 18 + (zone.capacity / 600) * 14;
+
+        // Box parameters
+        const boxW = 250;
+        const boxH = 175;
+
+        // Smart position relative to zone to prevent overlay clipping
+        let boxX = zx + baseRadius + 15;
+        let boxY = zy - boxH / 2;
+
+        if (zone.id.includes('gate_a')) {
+          boxX = zx - boxW / 2;
+          boxY = zy + baseRadius + 15;
+        } else if (zone.id.includes('gate_b')) {
+          boxX = zx - boxW / 2;
+          boxY = zy - baseRadius - boxH - 15;
+        } else if (zone.id.includes('gate_c')) {
+          boxX = zx - baseRadius - boxW - 15;
+          boxY = zy - boxH / 2;
+        } else if (zone.id.includes('gate_d')) {
+          boxX = zx + baseRadius + 15;
+          boxY = zy - boxH / 2;
+        } else {
+          boxX = cx + 25;
+          boxY = cy - boxH - 10;
+        }
+
+        // Adjust constraints
+        boxX = Math.max(10, Math.min(W - boxW - 10, boxX));
+        boxY = Math.max(10, Math.min(H - boxH - 10, boxY));
+
+        // Connect zone with box via indicator line
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.4)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(zx, zy);
+        ctx.lineTo(boxX + (zx > boxX + boxW ? boxW : 0), boxY + boxH / 2);
+        ctx.stroke();
+
+        // Box border and shadow glow
+        ctx.save();
+        ctx.shadowColor = '#00d4ff';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(5, 7, 18, 0.95)';
+        ctx.strokeStyle = 'var(--accent-cyan)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Header Background
+        ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, 24, [6, 6, 0, 0]);
+        ctx.fill();
+
+        // Header Text
+        ctx.fillStyle = 'white';
+        ctx.font = "bold 9px 'Orbitron', sans-serif";
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`📍 ${zone.name.toUpperCase()} — LIVE OPS`, boxX + 10, boxY + 12);
+
+        // Status Badge
+        const mitigationActive = zone.risk === 'critical' || zone.risk === 'high';
+        ctx.fillStyle = mitigationActive ? 'var(--accent-red)' : 'var(--accent-green)';
+        ctx.font = "bold 7px 'Space Mono', monospace";
+        ctx.textAlign = 'right';
+        ctx.fillText(mitigationActive ? 'MITIGATION ACTIVE' : 'NOMINAL MONITOR', boxX + boxW - 10, boxY + 12);
+
+        // Live Action Steps
+        const isCongested = zone.id === 'south_gate_b' && zone.density > 0.75;
+        const isStorm = (zone.id === 'concourse_main' || zone.id.includes('bowl')) && zone.risk !== 'safe';
+
+        let items = [
+          "Query CCTV telemetry feeds",
+          "Validate turnstile gate counts",
+          "Sync GPS density profiles",
+          "Strategic MOC readiness check"
+        ];
+        if (isCongested) {
+          items = [
+            "Deploy 14 corridor guides",
+            "Open Gate D overflow lanes",
+            "Update dynamic signage boards",
+            "Notify fans via Companion app"
+          ];
+        } else if (isStorm) {
+          items = [
+            "Boost indoor concourse HVAC",
+            "Pre-position emergency medics",
+            "Dispatch extra Metro trains",
+            "Deploy guides to shelters"
+          ];
+        }
+
+        // Render animated checklist items
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        let itemY = boxY + 36;
+        items.forEach((item, index) => {
+          let symbol = "⏳";
+          let color = 'var(--text-muted)';
+          
+          if (selectedZoneTimer > index + 1) {
+            symbol = "✓";
+            color = 'var(--accent-green)';
+          } else if (selectedZoneTimer === index + 1) {
+            symbol = "●";
+            color = 'var(--accent-amber)';
+          }
+          
+          ctx.fillStyle = color;
+          ctx.font = "bold 8px 'Space Mono', monospace";
+          ctx.fillText(symbol, boxX + 10, itemY);
+          
+          ctx.fillStyle = selectedZoneTimer >= index + 1 ? 'white' : 'var(--text-muted)';
+          ctx.font = "8px 'Space Mono', monospace";
+          ctx.fillText(item, boxX + 24, itemY);
+          
+          itemY += 16;
+        });
+
+        // Bottom Metrics separator
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(boxX + 10, boxY + boxH - 32);
+        ctx.lineTo(boxX + boxW - 10, boxY + boxH - 32);
+        ctx.stroke();
+
+        // Calculate dynamic crowd density values over time
+        const initialDensity = Math.round(zone.density * 100);
+        let currentDensity = initialDensity;
+        if (mitigationActive && selectedZoneTimer > 0) {
+          // De-escalate density in HUD based on animation ticks
+          currentDensity = Math.max(58, initialDensity - selectedZoneTimer * 4);
+        }
+
+        let eta = "Nominal";
+        if (isCongested) {
+          eta = selectedZoneTimer >= 5 ? "4m 12s" : "8m 00s";
+        } else if (isStorm) {
+          eta = selectedZoneTimer >= 5 ? "2m 18s" : "11m 00s";
+        }
+
+        const confidence = zone.risk === 'critical' ? 97 : (zone.risk === 'high' ? 91 : 95);
+
+        // Render metrics
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.font = "7px 'Space Mono', monospace";
+        ctx.fillText("DENSITY", boxX + 10, boxY + boxH - 24);
+        ctx.fillStyle = zone.risk === 'critical' ? 'var(--accent-red)' : 'var(--accent-cyan)';
+        ctx.font = "bold 10px 'Space Mono', monospace";
+        ctx.fillText(`${currentDensity}%`, boxX + 10, boxY + boxH - 14);
+
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.font = "7px 'Space Mono', monospace";
+        ctx.fillText("RESOLUTION ETA", boxX + 80, boxY + boxH - 24);
+        ctx.fillStyle = 'white';
+        ctx.font = "bold 10px 'Space Mono', monospace";
+        ctx.fillText(eta, boxX + 80, boxY + boxH - 14);
+
+        ctx.fillStyle = 'var(--text-muted)';
+        ctx.font = "7px 'Space Mono', monospace";
+        ctx.fillText("AI CONF", boxX + 170, boxY + boxH - 24);
+        ctx.fillStyle = 'var(--accent-green)';
+        ctx.font = "bold 10px 'Space Mono', monospace";
+        ctx.fillText(`${confidence}%`, boxX + 170, boxY + boxH - 14);
+      }
+    }
+
     animFrameRef.current = requestAnimationFrame(draw);
-  }, [zones, stadiumName, updateParticles, selectedZoneId]);
+  }, [zones, stadiumName, updateParticles, selectedZoneId, selectedZoneTimer]);
 
   useEffect(() => {
     animFrameRef.current = requestAnimationFrame(draw);
