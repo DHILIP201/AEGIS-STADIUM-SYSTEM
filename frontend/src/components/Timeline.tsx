@@ -19,15 +19,7 @@ export default function Timeline({ timeline, storyProgress }: Props) {
   const currentRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (currentRef.current) {
-      currentRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center',
-      });
-    }
-  }, [timeline]);
+  // Programmatic scroll effect removed to maintain viewport stability during monitoring updates
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

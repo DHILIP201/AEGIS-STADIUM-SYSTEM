@@ -173,11 +173,7 @@ export default function DebateModal({ debate, demoTourActive, onClose }: Props) 
     }
   }, [debate?.topic, debate?.phase, debate === null]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [visibleArgs, debate?.phase]);
+  // Programmatic scroll effect removed to maintain viewport stability inside the modal
 
   const displayDebate = debate ? debate : (cachedDebate ? { ...cachedDebate, phase: 'decided' as const } : null);
 

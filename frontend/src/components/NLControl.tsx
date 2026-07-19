@@ -21,11 +21,7 @@ export default function NLControl({ onSend, nlResponse, onScenario, onSpeed, onR
   const inputRef = useRef<HTMLInputElement>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [terminalHistory, nlResponse]);
+  // Programmatic scroll effect removed to maintain viewport stability on commands
 
   const handleSend = (textToSend = query) => {
     const command = textToSend.trim();
